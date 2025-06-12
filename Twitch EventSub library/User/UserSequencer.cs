@@ -207,6 +207,7 @@ namespace Twitch.EventSub.User
                     _logger.LogError("[OnRefreshTokenRequestAsync] Unexpected state: {State}", StateMachine.State);
                     throw new InvalidOperationException("[EventSubClient] - [UserSequencer] OnRefreshTokenRequestAsync went into unknown state");
             }
+        }
 
         /// <summary>
         /// Awaits the welcome message from the WebSocket.
