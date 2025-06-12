@@ -1,4 +1,4 @@
-﻿namespace Twitch.EventSub.API.Models
+﻿namespace Twitch.EventSub.API.Enums
 {
     public enum ConditionTypes
     {

@@ -1,14 +1,15 @@
-﻿using Twitch.EventSub.API.Models;
+﻿using Twitch.EventSub.API.Enums;
+using Twitch.EventSub.API.Models;
 
 namespace Twitch.EventSub.API.Extensions
 {
     public static class CreateSubscriptionRequestExtension
     {
-        private static readonly Dictionary<SubscriptionType, (string Type, string Version, List<ConditionTypes> Conditions)> TypeVersionConditionMap = GenerateSubscriptionDisctionary();
+        private static readonly Dictionary<SubscriptionTypes, (string Type, string Version, List<ConditionTypes> Conditions)> TypeVersionConditionMap = GenerateSubscriptionDisctionary();
 
-        private static Dictionary<SubscriptionType, (string Type, string Version, List<ConditionTypes> Conditions)> GenerateSubscriptionDisctionary()
+        private static Dictionary<SubscriptionTypes, (string Type, string Version, List<ConditionTypes> Conditions)> GenerateSubscriptionDisctionary()
         {
-            var newDict = new Dictionary<SubscriptionType, (string Type, string Version, List<ConditionTypes> Conditions)>();
+            var newDict = new Dictionary<SubscriptionTypes, (string Type, string Version, List<ConditionTypes> Conditions)>();
 
             foreach (var register in Twitch.EventSub.SubsRegister.Register.GetRegisterList())
             {
@@ -19,7 +20,7 @@ namespace Twitch.EventSub.API.Extensions
 
         //Reward Id enables to sub to specific reward only. As null it subs all rewards
         public static CreateSubscriptionRequest SetSubscriptionType(this CreateSubscriptionRequest request,
-         SubscriptionType subscriptionType, string userId, string? rewardId = null)
+         SubscriptionTypes subscriptionType, string userId, string? rewardId = null)
         {
             if (TypeVersionConditionMap.TryGetValue(subscriptionType, out var typeVersionCondition))
             {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Extensions;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.CoreFunctions;
@@ -34,7 +35,7 @@ namespace Twitch.EventSub.User
     {
         private string _accessToken;
         private readonly string _clientId;
-        private List<SubscriptionType> _listOfSubs;
+        private List<SubscriptionTypes> _listOfSubs;
         private readonly ILogger _logger;
         private readonly string _userId;
         private UserSequencer _userSequencer;
@@ -46,7 +47,7 @@ namespace Twitch.EventSub.User
         public EventProvider(
             string userId,
             string accessToken,
-            List<SubscriptionType> listOfSubs,
+            List<SubscriptionTypes> listOfSubs,
             string clientId,
             ILogger logger,
             bool allowRecovery)
@@ -183,7 +184,7 @@ namespace Twitch.EventSub.User
         /// <param name="accessToken"></param>
         /// <param name="listOfSubs"></param>
         /// <returns>Retuns true if update is successful</returns>
-        internal bool Update(string accessToken, List<SubscriptionType> listOfSubs)
+        internal bool Update(string accessToken, List<SubscriptionTypes> listOfSubs)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(accessToken, nameof(accessToken));
             ArgumentNullException.ThrowIfNull(listOfSubs, nameof(listOfSubs));

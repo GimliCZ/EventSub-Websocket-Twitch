@@ -84,9 +84,9 @@ namespace Twitch.EventSub.CoreFunctions
             }
             if (_isRunning)
             {
-            _timerWatchdog.Change(Timeout.Infinite, Timeout.Infinite);
-            _isRunning = false;
-            _logger.LogDebug("[EventSubClient] - [Watchdog] Watchdog stopped.");
+                _timerWatchdog.Change(Timeout.Infinite, Timeout.Infinite);
+                _isRunning = false;
+                _logger.LogDebug("[EventSubClient] - [Watchdog] Watchdog stopped.");
             }
             _logger.LogDebug("[EventSubClient] - [Watchdog] Watchdog is not running.");
         }

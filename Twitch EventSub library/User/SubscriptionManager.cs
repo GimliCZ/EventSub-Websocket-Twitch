@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Twitch.EventSub.API;
+using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.CoreFunctions;
 
@@ -58,7 +59,7 @@ namespace Twitch.EventSub.User
             {
                 throw new ArgumentNullException(nameof(clientId) + nameof(accessToken));
             }
-            var allSubscriptions = await ApiTryGetAllSubscriptionsAsync(clientId, accessToken, userId, clSource, logger, StatusProvider.SubscriptionStatus.Empty);
+            var allSubscriptions = await ApiTryGetAllSubscriptionsAsync(clientId, accessToken, userId, clSource, logger, SubscriptionStatusTypes.Empty);
             //Yes we can get null from subscription function, if something goes horribly wrong.
             if (allSubscriptions == null)
             {
@@ -83,7 +84,7 @@ namespace Twitch.EventSub.User
             }
 
             //Rerun subscription search to get all active current session subs
-            allSubscriptions = await ApiTryGetAllSubscriptionsAsync(clientId, accessToken, userId, clSource, logger, StatusProvider.SubscriptionStatus.Empty);
+            allSubscriptions = await ApiTryGetAllSubscriptionsAsync(clientId, accessToken, userId, clSource, logger, SubscriptionStatusTypes.Empty);
             //Yes we can get null from subscription function, if something goes horribly wrong.
             if (allSubscriptions == null)
             {
@@ -156,7 +157,7 @@ namespace Twitch.EventSub.User
             {
                 throw new ArgumentNullException(nameof(accessToken));
             }
-            var allSubscriptions = await ApiTryGetAllSubscriptionsAsync(clientId, accessToken, userId, clSource, logger, StatusProvider.SubscriptionStatus.Empty);
+            var allSubscriptions = await ApiTryGetAllSubscriptionsAsync(clientId, accessToken, userId, clSource, logger, SubscriptionStatusTypes.Empty);
             if (allSubscriptions is null)
             {
                 return;
@@ -253,7 +254,7 @@ namespace Twitch.EventSub.User
         /// <param name="logger">Logger instance</param>
         /// <param name="statusSelector">Filtration of status</param>
         /// <returns>Returns all subscriptions requested by filter, on fail returns null</returns>
-        private Task<List<GetSubscriptionsResponse>?> ApiTryGetAllSubscriptionsAsync(string clientId, string accessToken, string userId, CancellationTokenSource clSource, ILogger logger, StatusProvider.SubscriptionStatus statusSelector)
+        private Task<List<GetSubscriptionsResponse>?> ApiTryGetAllSubscriptionsAsync(string clientId, string accessToken, string userId, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector)
         {
             Task<List<GetSubscriptionsResponse>> TryGetAllSubscriptionsAsync() => TwitchApi.GetAllSubscriptionsAsync(clientId, accessToken, clSource, logger, statusSelector, _url);
             return TryFuncAsync(TryGetAllSubscriptionsAsync, logger, userId);

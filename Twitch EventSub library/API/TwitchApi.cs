@@ -3,7 +3,9 @@ using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Models;
+using Twitch.EventSub.API.Providers;
 using Twitch.EventSub.CoreFunctions;
 
 namespace Twitch.EventSub.API
@@ -105,7 +107,7 @@ namespace Twitch.EventSub.API
         /// <param name="after"></param>
         /// <returns cref="GetSubscriptionsResponse"> Provides segment of subscriptions, content MAY BE NULL</returns>
         /// <exception cref="InvalidAccessTokenException"></exception>
-        private static async Task<GetSubscriptionsResponse?> GetSubscriptionsAsync(string? clientId, string? accessToken, StatusProvider.SubscriptionStatus statusSelector, CancellationTokenSource clSource, ILogger logger, string? after = null, string? url = null)
+        private static async Task<GetSubscriptionsResponse?> GetSubscriptionsAsync(string? clientId, string? accessToken, SubscriptionStatusTypes statusSelector, CancellationTokenSource clSource, ILogger logger, string? after = null, string? url = null)
         {
             var status = StatusProvider.GetStatusString(statusSelector);
 
@@ -156,7 +158,7 @@ namespace Twitch.EventSub.API
         /// <param name="statusSelector"></param>
         /// <returns> list of subscriptions</returns>
         /// <exception cref="InvalidAccessTokenException">May provide exception from GetSubscriptionsAsync</exception>
-        public static async Task<List<GetSubscriptionsResponse>> GetAllSubscriptionsAsync(string? clientId, string? accessToken, CancellationTokenSource clSource, ILogger logger, StatusProvider.SubscriptionStatus statusSelector = StatusProvider.SubscriptionStatus.Enabled, string? url = null)
+        public static async Task<List<GetSubscriptionsResponse>> GetAllSubscriptionsAsync(string? clientId, string? accessToken, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector = SubscriptionStatusTypes.Enabled, string? url = null)
         {
             var allSubscriptions = new List<GetSubscriptionsResponse>();
             string? afterCursor = null;
