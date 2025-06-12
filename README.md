@@ -1,15 +1,16 @@
 # Twitch EventSub Websocket
 <p align="center">
-  <a href="https://www.nuget.org/packages/Twitch.EventSub.Websocket/2.0.0" target="_blank">
-  <img src="https://buildstats.info/nuget/Twitch.EventSub.Websocket" style="max-height: 300px;" alt="Platform: iOS">
-</a>
-  <img src="https://img.shields.io/badge/Platform-.NET%208-orange.svg"style="max-height: 300px;" alt="Platform: iOS">
-  <img src="https://img.shields.io/github/license/GimliCZ/TwitchEventSub_Websocket" alt="License">
+  <a href="https://www.nuget.org/packages/Twitch.EventSub.Websocket/2.0.5" target="_blank">
+    <img src="https://img.shields.io/nuget/v/Twitch.EventSub.Websocket.svg?label=NuGet%20v" alt="NuGet version" style="max-height:300px;" />
+    <img src="https://img.shields.io/nuget/dt/Twitch.EventSub.Websocket.svg?label=Downloads" alt="NuGet downloads" style="max-height:300px;" />
+  </a>
+  <img src="https://img.shields.io/badge/Platform-.NET%208-orange.svg" style="max-height: 300px;" alt=".NET 8" />
+  <img src="https://img.shields.io/github/license/GimliCZ/TwitchEventSub_Websocket" alt="License" />
   <br />
-  <img src="https://img.shields.io/github/issues/GimliCZ/TwitchEventSub_Websocket" alt="Issues">
-  <img src="https://img.shields.io/github/stars/GimliCZ/TwitchEventSub_Websocket" alt="Stars">
-  <img src="https://img.shields.io/github/forks/GimliCZ/TwitchEventSub_Websocket" alt="Forks">
-  <img src="https://img.shields.io/github/last-commit/GimliCZ/TwitchEventSub_Websocket" alt="Last Commit">
+  <img src="https://img.shields.io/github/issues/GimliCZ/TwitchEventSub_Websocket" alt="Issues" />
+  <img src="https://img.shields.io/github/stars/GimliCZ/TwitchEventSub_Websocket" alt="Stars" />
+  <img src="https://img.shields.io/github/forks/GimliCZ/TwitchEventSub_Websocket" alt="Forks" />
+  <img src="https://img.shields.io/github/last-commit/GimliCZ/TwitchEventSub_Websocket" alt="Last Commit" />
 </p>
 
 # About
