@@ -125,7 +125,7 @@ namespace Twitch.EventSub
                     return true;
                 }
             }
-            _logger.LogError("DeleteUser failed because userId does not exist: {UserId}", userId);
+            _logger.LogInformation("DeleteUser failed because userId does not exist: {UserId}", userId);
             return false;
         }
 
