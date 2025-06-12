@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Twitch.EventSub.Messages.NotificationMessage.Events.Automod.Models;
 
 namespace Twitch.EventSub.Messages.NotificationMessage.Events.Automod
 {

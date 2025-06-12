@@ -1,4 +1,4 @@
-﻿using Twitch.EventSub.API.Models;
+﻿using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.Messages.NotificationMessage.Events;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Automod;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelCharity;
@@ -19,6 +19,7 @@ using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelUnban;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelVIP;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelWarning;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Stream;
+using Twitch.EventSub.SubsRegister.Models;
 
 namespace Twitch.EventSub.SubsRegister
 {
@@ -31,7 +32,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.AutomodMessageHold,
             Ver = "1",
             SpecificObject = typeof(AutomodMessageHoldEvent),
-            SubscriptionType = SubscriptionType.AutomodMessageHold,
+            SubscriptionType = SubscriptionTypes.AutomodMessageHold,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -40,7 +41,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.AutomodMessageUpdate,
             Ver = "1",
             SpecificObject = typeof(AutomodMessageHoldEvent),
-            SubscriptionType = SubscriptionType.AutomodMessageUpdate,
+            SubscriptionType = SubscriptionTypes.AutomodMessageUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -49,7 +50,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.AutomodTermsUpdate,
             Ver = "1",
             SpecificObject = typeof(AutomodTermsUpdateEvent),
-            SubscriptionType = SubscriptionType.AutomodTermsUpdate,
+            SubscriptionType = SubscriptionTypes.AutomodTermsUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -58,7 +59,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ConduitShardDisabled,
             Ver = "1",
             SpecificObject = typeof(ConduitShardDisabledEvent),
-            SubscriptionType = SubscriptionType.ConduitShardDisabled,
+            SubscriptionType = SubscriptionTypes.ConduitShardDisabled,
             Conditions = CondList(ConditionTypes.ClientId)
         };
 
@@ -67,7 +68,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelAdBreakBegin,
             Ver = "1",
             SpecificObject = typeof(ChannelAdBreakBeginEvent),
-            SubscriptionType = SubscriptionType.ChannelAdBreakBegin,
+            SubscriptionType = SubscriptionTypes.ChannelAdBreakBegin,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -76,7 +77,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelBan,
             Ver = "1",
             SpecificObject = typeof(ChannelBanEvent),
-            SubscriptionType = SubscriptionType.ChannelBan,
+            SubscriptionType = SubscriptionTypes.ChannelBan,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -85,7 +86,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelFollow,
             Ver = "2",
             SpecificObject = typeof(ChannelFollowEvent),
-            SubscriptionType = SubscriptionType.ChannelFollow,
+            SubscriptionType = SubscriptionTypes.ChannelFollow,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -94,7 +95,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelGoalBegin,
             Ver = "1",
             SpecificObject = typeof(ChannelGoalBeginEvent),
-            SubscriptionType = SubscriptionType.ChannelGoalBegin,
+            SubscriptionType = SubscriptionTypes.ChannelGoalBegin,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -103,7 +104,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelGoalEnd,
             Ver = "1",
             SpecificObject = typeof(ChannelGoalEndEvent),
-            SubscriptionType = SubscriptionType.ChannelGoalEnd,
+            SubscriptionType = SubscriptionTypes.ChannelGoalEnd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -112,7 +113,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelGoalProgress,
             Ver = "1",
             SpecificObject = typeof(ChannelGoalProgressEvent),
-            SubscriptionType = SubscriptionType.ChannelGoalProgress,
+            SubscriptionType = SubscriptionTypes.ChannelGoalProgress,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -121,7 +122,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelGuestStarGuestUpdate,
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarGuestUpdateEvent),
-            SubscriptionType = SubscriptionType.BetaChannelGuestStarGuestUpdate,
+            SubscriptionType = SubscriptionTypes.BetaChannelGuestStarGuestUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -130,7 +131,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelGuestStarSessionBegin,
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarSessionBeginEvent),
-            SubscriptionType = SubscriptionType.BetaChannelGuestStarSessionBegin,
+            SubscriptionType = SubscriptionTypes.BetaChannelGuestStarSessionBegin,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -139,7 +140,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelGuestStarSessionEnd,
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarSessionEndEvent),
-            SubscriptionType = SubscriptionType.BetaChannelGuestStarSessionEnd,
+            SubscriptionType = SubscriptionTypes.BetaChannelGuestStarSessionEnd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -148,7 +149,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelGuestStarSettingsUpdate,
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarSettingsUpdateEvent),
-            SubscriptionType = SubscriptionType.BetaChannelGuestStarSettingsUpdate,
+            SubscriptionType = SubscriptionTypes.BetaChannelGuestStarSettingsUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -157,7 +158,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelHypeTrainBegin,
             Ver = "1",
             SpecificObject = typeof(ChannelHypeTrainBeginEvent),
-            SubscriptionType = SubscriptionType.ChannelHypeTrainBegin,
+            SubscriptionType = SubscriptionTypes.ChannelHypeTrainBegin,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -166,7 +167,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelHypeTrainEnd,
             Ver = "1",
             SpecificObject = typeof(ChannelHypeTrainEndEvent),
-            SubscriptionType = SubscriptionType.ChannelHypeTrainEnd,
+            SubscriptionType = SubscriptionTypes.ChannelHypeTrainEnd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -175,7 +176,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelHypeTrainProgress,
             Ver = "1",
             SpecificObject = typeof(ChannelHypeTrainProgressEvent),
-            SubscriptionType = SubscriptionType.ChannelHypeTrainProgress,
+            SubscriptionType = SubscriptionTypes.ChannelHypeTrainProgress,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -184,7 +185,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelCharityCampaignProgress,
             Ver = "1",
             SpecificObject = typeof(ChannelCharityCampaignProgressEvent),
-            SubscriptionType = SubscriptionType.CharityCampaignProgress,
+            SubscriptionType = SubscriptionTypes.CharityCampaignProgress,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -193,7 +194,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelCharityCampaignStart,
             Ver = "1",
             SpecificObject = typeof(ChannelCharityCampaignStartEvent),
-            SubscriptionType = SubscriptionType.CharityCampaignStart,
+            SubscriptionType = SubscriptionTypes.CharityCampaignStart,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -202,7 +203,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelCharityCampaignStop,
             Ver = "1",
             SpecificObject = typeof(ChannelCharityCampaignStopEvent),
-            SubscriptionType = SubscriptionType.CharityCampaignStop,
+            SubscriptionType = SubscriptionTypes.CharityCampaignStop,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -211,7 +212,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelCharityDonation,
             Ver = "1",
             SpecificObject = typeof(ChannelCharityDonationEvent),
-            SubscriptionType = SubscriptionType.CharityDonation,
+            SubscriptionType = SubscriptionTypes.CharityDonation,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -220,7 +221,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatClear,
             Ver = "1",
             SpecificObject = typeof(ChannelChatClearEvent),
-            SubscriptionType = SubscriptionType.ChannelChatClear,
+            SubscriptionType = SubscriptionTypes.ChannelChatClear,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -229,7 +230,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatClearUserMessages,
             Ver = "1",
             SpecificObject = typeof(ChannelChatClearUserMessagesEvent),
-            SubscriptionType = SubscriptionType.ChannelChatClearUserMessages,
+            SubscriptionType = SubscriptionTypes.ChannelChatClearUserMessages,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
@@ -238,7 +239,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatMessage,
             Ver = "1",
             SpecificObject = typeof(ChannelChatMessageEvent),
-            SubscriptionType = SubscriptionType.ChannelChatMessage,
+            SubscriptionType = SubscriptionTypes.ChannelChatMessage,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
@@ -247,7 +248,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatMessageDelete,
             Ver = "1",
             SpecificObject = typeof(ChannelChatMessageDeleteEvent),
-            SubscriptionType = SubscriptionType.ChannelChatMessageDelete,
+            SubscriptionType = SubscriptionTypes.ChannelChatMessageDelete,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -256,7 +257,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatNotification,
             Ver = "1",
             SpecificObject = typeof(ChannelChatNotificationEvent),
-            SubscriptionType = SubscriptionType.ChannelChatNotification,
+            SubscriptionType = SubscriptionTypes.ChannelChatNotification,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -265,7 +266,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatSettingsUpdate,
             Ver = "1",
             SpecificObject = typeof(ChannelChatSettingsUpdateEvent),
-            SubscriptionType = SubscriptionType.ChannelChatSettingsUpdate,
+            SubscriptionType = SubscriptionTypes.ChannelChatSettingsUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -274,7 +275,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatUserMessageHold,
             Ver = "1",
             SpecificObject = typeof(ChannelChatUserMessageHoldEvent),
-            SubscriptionType = SubscriptionType.ChannelChatUserMessageHold,
+            SubscriptionType = SubscriptionTypes.ChannelChatUserMessageHold,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
@@ -283,7 +284,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelChatUserMessageUpdate,
             Ver = "1",
             SpecificObject = typeof(ChannelChatUserMessageUpdateEvent),
-            SubscriptionType = SubscriptionType.ChannelChatUserMessageUpdate,
+            SubscriptionType = SubscriptionTypes.ChannelChatUserMessageUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
@@ -292,7 +293,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelCheer,
             Ver = "1",
             SpecificObject = typeof(ChannelCheerEvent),
-            SubscriptionType = SubscriptionType.ChannelCheer,
+            SubscriptionType = SubscriptionTypes.ChannelCheer,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -301,7 +302,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelModeratorAdd,
             Ver = "1",
             SpecificObject = typeof(ChannelModeratorAddEvent),
-            SubscriptionType = SubscriptionType.ChannelModeratorAdd,
+            SubscriptionType = SubscriptionTypes.ChannelModeratorAdd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -310,7 +311,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelModeratorRemove,
             Ver = "1",
             SpecificObject = typeof(ChannelModeratorRemoveEvent),
-            SubscriptionType = SubscriptionType.ChannelModeratorRemove,
+            SubscriptionType = SubscriptionTypes.ChannelModeratorRemove,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -319,7 +320,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPointsAutomaticRewardRedemptionAdd,
             Ver = "1",
             SpecificObject = typeof(ChannelPointsAutomaticRewardRedemptionAddEvent),
-            SubscriptionType = SubscriptionType.ChannelPointsAutomaticRewardRedemptionAdd,
+            SubscriptionType = SubscriptionTypes.ChannelPointsAutomaticRewardRedemptionAdd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -328,7 +329,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPointsCustomRewardAdd,
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardAddEvent),
-            SubscriptionType = SubscriptionType.ChannelPointsCustomRewardAdd,
+            SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardAdd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -337,7 +338,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPointsCustomRewardRedemptionAdd,
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardRedemptionAddEvent),
-            SubscriptionType = SubscriptionType.ChannelPointsCustomRewardRedemptionAdd,
+            SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardRedemptionAdd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.RewardId)
         };
 
@@ -346,7 +347,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPointsCustomRewardRedemptionUpdate,
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardRedemptionUpdateEvent),
-            SubscriptionType = SubscriptionType.ChannelPointsCustomRewardRedemptionUpdate,
+            SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardRedemptionUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.RewardId)
         };
 
@@ -355,7 +356,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPointsCustomRewardRemove,
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardRemoveEvent),
-            SubscriptionType = SubscriptionType.ChannelPointsCustomRewardRemove,
+            SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardRemove,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.RewardId)
         };
 
@@ -364,7 +365,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPointsCustomRewardUpdate,
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardUpdateEvent),
-            SubscriptionType = SubscriptionType.ChannelPointsCustomRewardUpdate,
+            SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.RewardId)
         };
 
@@ -373,7 +374,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPollBegin,
             Ver = "1",
             SpecificObject = typeof(ChannelPollBeginEvent),
-            SubscriptionType = SubscriptionType.ChannelPollBegin,
+            SubscriptionType = SubscriptionTypes.ChannelPollBegin,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -382,7 +383,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPollEnd,
             Ver = "1",
             SpecificObject = typeof(ChannelPollEndEvent),
-            SubscriptionType = SubscriptionType.ChannelPollEnd,
+            SubscriptionType = SubscriptionTypes.ChannelPollEnd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -391,7 +392,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPollProgress,
             Ver = "1",
             SpecificObject = typeof(ChannelPollProgressEvent),
-            SubscriptionType = SubscriptionType.ChannelPollProgress,
+            SubscriptionType = SubscriptionTypes.ChannelPollProgress,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -400,7 +401,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPredictionBegin,
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionBeginEvent),
-            SubscriptionType = SubscriptionType.ChannelPredictionBegin,
+            SubscriptionType = SubscriptionTypes.ChannelPredictionBegin,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -409,7 +410,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPredictionEnd,
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionEndEvent),
-            SubscriptionType = SubscriptionType.ChannelPredictionEnd,
+            SubscriptionType = SubscriptionTypes.ChannelPredictionEnd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -418,7 +419,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPredictionLock,
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionLockEvent),
-            SubscriptionType = SubscriptionType.ChannelPredictionLock,
+            SubscriptionType = SubscriptionTypes.ChannelPredictionLock,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -427,7 +428,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelPredictionProgress,
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionProgressEvent),
-            SubscriptionType = SubscriptionType.ChannelPredictionProgress,
+            SubscriptionType = SubscriptionTypes.ChannelPredictionProgress,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -436,7 +437,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelRaid,
             Ver = "1",
             SpecificObject = typeof(ChannelRaidEvent),
-            SubscriptionType = SubscriptionType.ChannelRaid,
+            SubscriptionType = SubscriptionTypes.ChannelRaid,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -445,7 +446,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelShieldModeBegin,
             Ver = "1",
             SpecificObject = typeof(ChannelShieldModeBeginEvent),
-            SubscriptionType = SubscriptionType.ChannelShieldModeBegin,
+            SubscriptionType = SubscriptionTypes.ChannelShieldModeBegin,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -454,7 +455,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelShieldModeEnd,
             Ver = "1",
             SpecificObject = typeof(ChannelShieldModeEndEvent),
-            SubscriptionType = SubscriptionType.ChannelShieldModeEnd,
+            SubscriptionType = SubscriptionTypes.ChannelShieldModeEnd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -463,7 +464,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelShoutoutCreate,
             Ver = "1",
             SpecificObject = typeof(ChannelShoutoutCreateEvent),
-            SubscriptionType = SubscriptionType.ChannelShoutoutCreate,
+            SubscriptionType = SubscriptionTypes.ChannelShoutoutCreate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -472,7 +473,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelShoutoutReceived,
             Ver = "1",
             SpecificObject = typeof(ChannelShoutoutReceivedEvent),
-            SubscriptionType = SubscriptionType.ChannelShoutoutReceived,
+            SubscriptionType = SubscriptionTypes.ChannelShoutoutReceived,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -481,7 +482,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelSubscribe,
             Ver = "1",
             SpecificObject = typeof(ChannelSubscribeEvent),
-            SubscriptionType = SubscriptionType.ChannelSubscribe,
+            SubscriptionType = SubscriptionTypes.ChannelSubscribe,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -490,7 +491,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelSubscriptionEnd,
             Ver = "1",
             SpecificObject = typeof(ChannelSubscriptionEndEvent),
-            SubscriptionType = SubscriptionType.ChannelSubscriptionEnd,
+            SubscriptionType = SubscriptionTypes.ChannelSubscriptionEnd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -499,7 +500,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelSubscriptionGift,
             Ver = "1",
             SpecificObject = typeof(ChannelSubscriptionGiftEvent),
-            SubscriptionType = SubscriptionType.ChannelSubscriptionGift,
+            SubscriptionType = SubscriptionTypes.ChannelSubscriptionGift,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -508,7 +509,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelSubscriptionMessage,
             Ver = "1",
             SpecificObject = typeof(ChannelSubscriptionMessageEvent),
-            SubscriptionType = SubscriptionType.ChannelSubscriptionMessage,
+            SubscriptionType = SubscriptionTypes.ChannelSubscriptionMessage,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -517,7 +518,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelUnban,
             Ver = "1",
             SpecificObject = typeof(ChannelUnbanEvent),
-            SubscriptionType = SubscriptionType.ChannelUnban,
+            SubscriptionType = SubscriptionTypes.ChannelUnban,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -526,7 +527,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelUnbanRequestCreate,
             Ver = "1",
             SpecificObject = typeof(ChannelUnbanRequestCreateEvent),
-            SubscriptionType = SubscriptionType.ChannelUnbanCreate,
+            SubscriptionType = SubscriptionTypes.ChannelUnbanCreate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -535,7 +536,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelUnbanRequestResolve,
             Ver = "1",
             SpecificObject = typeof(ChannelUnbanRequestResolveEvent),
-            SubscriptionType = SubscriptionType.ChannelUnbanResolve,
+            SubscriptionType = SubscriptionTypes.ChannelUnbanResolve,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -544,7 +545,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelUpdate,
             Ver = "2",
             SpecificObject = typeof(ChannelUpdateEvent),
-            SubscriptionType = SubscriptionType.ChannelUpdate,
+            SubscriptionType = SubscriptionTypes.ChannelUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -553,7 +554,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelVIPAdd,
             Ver = "1",
             SpecificObject = typeof(ChannelVIPAddEvent),
-            SubscriptionType = SubscriptionType.ChannelVIPAdd,
+            SubscriptionType = SubscriptionTypes.ChannelVIPAdd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -562,7 +563,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelVIPRemove,
             Ver = "1",
             SpecificObject = typeof(ChannelVIPRemoveEvent),
-            SubscriptionType = SubscriptionType.ChannelVIPRemove,
+            SubscriptionType = SubscriptionTypes.ChannelVIPRemove,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -571,7 +572,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelWarningAcknowledge,
             Ver = "1",
             SpecificObject = typeof(ChannelWarningAcknowledgeEvent),
-            SubscriptionType = SubscriptionType.ChannelWarningAcknowledge,
+            SubscriptionType = SubscriptionTypes.ChannelWarningAcknowledge,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -580,7 +581,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelWarningSend,
             Ver = "1",
             SpecificObject = typeof(ChannelWarningSendEvent),
-            SubscriptionType = SubscriptionType.ChannelWarningSend,
+            SubscriptionType = SubscriptionTypes.ChannelWarningSend,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -589,7 +590,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.StreamOffline,
             Ver = "1",
             SpecificObject = typeof(StreamOfflineEvent),
-            SubscriptionType = SubscriptionType.StreamOffline,
+            SubscriptionType = SubscriptionTypes.StreamOffline,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -598,7 +599,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.StreamOnline,
             Ver = "1",
             SpecificObject = typeof(StreamOnlineEvent),
-            SubscriptionType = SubscriptionType.StreamOnline,
+            SubscriptionType = SubscriptionTypes.StreamOnline,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
 
@@ -607,7 +608,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelSuspiciousUserMessage,
             Ver = "1",
             SpecificObject = typeof(ChannelSuspiciousUserMessageEvent),
-            SubscriptionType = SubscriptionType.SuspiciousUserMessage,
+            SubscriptionType = SubscriptionTypes.SuspiciousUserMessage,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -616,7 +617,7 @@ namespace Twitch.EventSub.SubsRegister
             Key = RegisterKeys.ChannelSuspiciousUserUpdate,
             Ver = "1",
             SpecificObject = typeof(ChannelSuspiciousUserUpdateEvent),
-            SubscriptionType = SubscriptionType.SuspiciousUserUpdate,
+            SubscriptionType = SubscriptionTypes.SuspiciousUserUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
@@ -739,14 +740,5 @@ namespace Twitch.EventSub.SubsRegister
             list.AddRange(types);
             return list;
         }
-    }
-
-    public class RegisterItem
-    {
-        public string Key { get; set; }
-        public Type SpecificObject { get; set; }
-        public SubscriptionType SubscriptionType { get; set; }
-        public string Ver { get; set; }
-        public List<ConditionTypes> Conditions { get; set; }
     }
 };

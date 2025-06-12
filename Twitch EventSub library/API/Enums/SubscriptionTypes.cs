@@ -1,6 +1,6 @@
-﻿namespace Twitch.EventSub.API.Models
+﻿namespace Twitch.EventSub.API.Enums
 {
-    public enum SubscriptionType
+    public enum SubscriptionTypes
     {
         AutomodMessageHold,
 

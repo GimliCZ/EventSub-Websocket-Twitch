@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using Twitch.EventSub.API.Models;
+using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.CoreFunctions;
 using Twitch.EventSub.Interfaces;
 using Twitch.EventSub.User;
@@ -59,7 +59,7 @@ namespace Twitch.EventSub
         public async Task<bool> AddUserAsync(
             string userId,
             string accessToken,
-            List<SubscriptionType> listOfSubs,
+            List<SubscriptionTypes> listOfSubs,
             bool allowRecovery)
         {
             if (string.IsNullOrWhiteSpace(userId))
@@ -85,7 +85,7 @@ namespace Twitch.EventSub
         /// <param name="accessToken">The new access token.</param>
         /// <param name="listOfSubs">The new list of subscription types.</param>
         /// <returns>True if the update was successful, false otherwise.</returns>
-        public bool UpdateUser(string userId, string accessToken, List<SubscriptionType> listOfSubs)
+        public bool UpdateUser(string userId, string accessToken, List<SubscriptionTypes> listOfSubs)
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
@@ -125,7 +125,7 @@ namespace Twitch.EventSub
                     return true;
                 }
             }
-            _logger.LogError("DeleteUser failed because userId does not exist: {UserId}", userId);
+            _logger.LogInformation("DeleteUser failed because userId does not exist: {UserId}", userId);
             return false;
         }
 

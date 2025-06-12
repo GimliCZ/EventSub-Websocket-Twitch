@@ -1,4 +1,4 @@
-﻿using Twitch.EventSub.API.Models;
+﻿using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.Interfaces;
 
 namespace Twitch.EventSub
@@ -25,7 +25,7 @@ namespace Twitch.EventSub
         /// <param name="listOfSubs">The list of subscription types.</param>
         /// <param name="allowRecovery">Allow internal recovery attempts.</param>
         /// <returns>A task representing the asynchronous operation, with a result indicating success or failure.</returns>
-        Task<bool> AddUserAsync(string userId, string accessToken, List<SubscriptionType> listOfSubs, bool allowRecovery);
+        Task<bool> AddUserAsync(string userId, string accessToken, List<SubscriptionTypes> listOfSubs, bool allowRecovery);
 
         /// <summary>
         /// Deletes an existing user from the event subscription service.
@@ -70,6 +70,6 @@ namespace Twitch.EventSub
         /// <param name="accessToken">The new access token.</param>
         /// <param name="listOfSubs">The new list of subscription types.</param>
         /// <returns>True if the update was successful, false otherwise.</returns>
-        bool UpdateUser(string userId, string accessToken, List<SubscriptionType> listOfSubs);
+        bool UpdateUser(string userId, string accessToken, List<SubscriptionTypes> listOfSubs);
     }
 }

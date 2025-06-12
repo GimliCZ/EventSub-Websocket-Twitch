@@ -1,5 +1,5 @@
-﻿using System.Text.Json;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System.Text.Json;
 using Twitch.EventSub.Messages.SharedContents;
 
 namespace TwitchEventSub_Websocket.Tests

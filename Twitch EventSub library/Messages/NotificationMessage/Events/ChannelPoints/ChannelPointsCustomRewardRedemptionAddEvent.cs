@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints.Models;
 
 namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints
 {
@@ -27,20 +28,5 @@ namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints
 
         [JsonProperty("redeemed_at")]
         public string RedeemedAt { get; set; }
-    }
-
-    public class Reward
-    {
-        [JsonProperty("id")]
-        public string Id { get; set; }
-
-        [JsonProperty("title")]
-        public string Title { get; set; }
-
-        [JsonProperty("cost")]
-        public int Cost { get; set; }
-
-        [JsonProperty("prompt")]
-        public string Prompt { get; set; }
     }
 }

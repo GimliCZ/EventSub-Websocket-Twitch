@@ -1,18 +1,8 @@
 ﻿using Newtonsoft.Json;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints.Models;
 
 namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints
 {
-    public class DefaultImage
-    {
-        [JsonProperty("url_1x")]
-        public string Url1x { get; set; }
-
-        [JsonProperty("url_2x")]
-        public string Url2x { get; set; }
-
-        [JsonProperty("url_4x")]
-        public string Url4x { get; set; }
-    }
 
     public class ChannelPointsCustomRewardAddEvent : WebSocketNotificationEvent
     {
@@ -66,44 +56,5 @@ namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints
 
         [JsonProperty("default_image")]
         public DefaultImage DefaultImage { get; set; }
-    }
-
-    public class GlobalCooldown
-    {
-        [JsonProperty("is_enabled")]
-        public bool IsEnabled { get; set; }
-
-        [JsonProperty("seconds")]
-        public int Seconds { get; set; }
-    }
-
-    public class Image
-    {
-        [JsonProperty("url_1x")]
-        public string Url1x { get; set; }
-
-        [JsonProperty("url_2x")]
-        public string Url2x { get; set; }
-
-        [JsonProperty("url_4x")]
-        public string Url4x { get; set; }
-    }
-
-    public class MaxPerStream
-    {
-        [JsonProperty("is_enabled")]
-        public bool IsEnabled { get; set; }
-
-        [JsonProperty("value")]
-        public int Value { get; set; }
-    }
-
-    public class MaxPerUserPerStream
-    {
-        [JsonProperty("is_enabled")]
-        public bool IsEnabled { get; set; }
-
-        [JsonProperty("value")]
-        public int Value { get; set; }
     }
 }

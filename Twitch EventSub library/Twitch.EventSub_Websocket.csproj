@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <RootNamespace>Twitch.EventSub</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -10,20 +10,20 @@
         <Title>Twitch EventSub Websocket</Title>
         <Authors>Gimli_CZ</Authors>
         <Description>Twitch EventSub library communicating via websocket</Description>
-        <Copyright>Copyright (c) Gimli_CZ 2023</Copyright>
+        <Copyright>Copyright (c) Gimli_CZ 2025</Copyright>
         <PackageProjectUrl>https://github.com/GimliCZ/TwitchEventSub_Websocket/</PackageProjectUrl>
         <License>https://github.com/GimliCZ/TwitchEventSub_Websocket/blob/master/LICENSE</License>
         <RepositoryUrl>https://github.com/GimliCZ/TwitchEventSub_Websocket</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <Version>2.1.2</Version>
+        <Version>2.2.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
-        <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.10.48" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" />
+        <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.14.15" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Stateless" Version="5.16.0" />
-        <PackageReference Include="Websocket.Client" Version="5.0.0" />
+        <PackageReference Include="Stateless" Version="5.17.0" />
+        <PackageReference Include="Websocket.Client" Version="5.2.0" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="../README.md" Pack="true" PackagePath=".">
