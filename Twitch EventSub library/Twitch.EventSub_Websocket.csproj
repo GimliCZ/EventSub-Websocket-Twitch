@@ -11,9 +11,9 @@
         <Authors>Gimli_CZ</Authors>
         <Description>Twitch EventSub library communicating via websocket</Description>
         <Copyright>Copyright (c) Gimli_CZ 2025</Copyright>
-        <PackageProjectUrl>https://github.com/GimliCZ/TwitchEventSub_Websocket/</PackageProjectUrl>
-        <License>https://github.com/GimliCZ/TwitchEventSub_Websocket/blob/master/LICENSE</License>
-        <RepositoryUrl>https://github.com/GimliCZ/TwitchEventSub_Websocket</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/GimliCZ/EventSub-Websocket-Twitch/</PackageProjectUrl>
+        <License>https://github.com/GimliCZ/EventSub-Websocket-Twitch/blob/master/LICENSE</License>
+        <RepositoryUrl>https://github.com/GimliCZ/EventSub-Websocket-Twitch/</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <Version>2.2.2</Version>
