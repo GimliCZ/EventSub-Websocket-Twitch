@@ -236,6 +236,7 @@ namespace Twitch.EventSub.User
         /// </summary>
         protected override async Task RunManagerAsync()
         {
+            try
             {
                 _logger.LogDebug("[RunManagerAsync] Running manager for UserId: {UserId}", UserId);
                 _managerTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -250,6 +251,10 @@ namespace Twitch.EventSub.User
                     _logger
                     );
                 await RunManagerNextActionAsync(checkOk);
+            }
+            catch (TaskCanceledException)
+            {
+                //NOOP
             }
         }
 
@@ -409,6 +414,7 @@ namespace Twitch.EventSub.User
         /// <returns></returns>
         protected override async Task InitialAccessTokenAsync()
         {
+            try
             {
                 _logger.LogDebug("[InitialAccessTokenAsync] Validating initial access token for UserId: {UserId}", UserId);
                 using (CancellationTokenSource cts = new CancellationTokenSource(AccessTokenValidationTolerance))
@@ -416,6 +422,10 @@ namespace Twitch.EventSub.User
                     var validationResult = await _subscriptionManager.ApiTryValidateAsync(AccessToken, UserId, _logger, cts);
                     await InicialAccessTokenNextActionAsync(validationResult);
                 }
+            }
+            catch (TaskCanceledException) 
+            {
+                //NOOP
             }
         }
 
@@ -440,24 +450,31 @@ namespace Twitch.EventSub.User
         /// <exception cref="InvalidOperationException"></exception>
         protected override async Task NewAccessTokenRequestAsync()
         {
-            using (var cls = new CancellationTokenSource(NewAccessTokenRequestDelay))
+            try
             {
-                _logger.LogDebug("[NewAccessTokenRequestAsync] Requesting new access token for UserId: {UserId}", UserId);
-                await _awaitRefresh.WaitAsync(cls.Token);
-                if (LastAccessViolationArgs != null)
+                using (var cls = new CancellationTokenSource(NewAccessTokenRequestDelay))
                 {
-                    var invalidToken = AccessToken;
-                    await AccessTokenRequestedEvent.TryInvoke(this, LastAccessViolationArgs);
-                    _logger.LogDebugDetails("[EventSubClient] - [UserSequencer] AccessToken refreshed requested," +
-                        " Old token, new token, time of request", invalidToken, AccessToken, LastAccessViolationArgs);
-                    var NewToken = AccessToken;
-                    await NewAccessTokenNextActionAsync(invalidToken, NewToken);
+                    _logger.LogDebug("[NewAccessTokenRequestAsync] Requesting new access token for UserId: {UserId}", UserId);
+                    await _awaitRefresh.WaitAsync(cls.Token);
+                    if (LastAccessViolationArgs != null)
+                    {
+                        var invalidToken = AccessToken;
+                        await AccessTokenRequestedEvent.TryInvoke(this, LastAccessViolationArgs);
+                        _logger.LogDebugDetails("[EventSubClient] - [UserSequencer] AccessToken refreshed requested," +
+                            " Old token, new token, time of request", invalidToken, AccessToken, LastAccessViolationArgs);
+                        var NewToken = AccessToken;
+                        await NewAccessTokenNextActionAsync(invalidToken, NewToken);
+                    }
+                    else
+                    {
+                        _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Request for New Access token didnt contain valid exception", LastAccessViolationArgs);
+                        await StateMachine.FireAsync(UserActions.AwaitNewTokenFailed);
+                    }
                 }
-                else
-                {
-                    _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Request for New Access token didnt contain valid exception", LastAccessViolationArgs);
-                    await StateMachine.FireAsync(UserActions.AwaitNewTokenFailed);
-                }
+            }
+            catch(TaskCanceledException)
+            {
+                //NOOP
             }
         }
 
