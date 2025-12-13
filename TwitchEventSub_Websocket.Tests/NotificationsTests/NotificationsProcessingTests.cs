@@ -23,7 +23,7 @@ namespace TwitchEventSub_Websocket.Tests.NotificationsTests
 {
     public class NotificationsProcessingTests
     {
-        private const string AddPath = "NotificationsTests\\NotificationsMessages";
+        private readonly string AddPath = Path.Combine("NotificationsTests","NotificationsMessages");
 
         [Fact]
         public async Task MessageProcessing_IsConduitShardsDisabled()

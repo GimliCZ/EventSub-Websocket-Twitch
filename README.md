@@ -4,7 +4,7 @@
     <img src="https://img.shields.io/nuget/v/Twitch.EventSub.Websocket.svg?label=NuGet%20v" alt="NuGet version" style="max-height:300px;" />
     <img src="https://img.shields.io/nuget/dt/Twitch.EventSub.Websocket.svg?label=Downloads" alt="NuGet downloads" style="max-height:300px;" />
   </a>
-  <img src="https://img.shields.io/badge/Platform-.NET%209-orange.svg" style="max-height: 300px;" alt=".NET 9" />
+  <img src="https://img.shields.io/badge/Platform-.NET%2010-orange.svg" style="max-height: 300px;" alt=".NET 9" />
   <img src="https://img.shields.io/github/license/GimliCZ/TwitchEventSub_Websocket" alt="License" />
   <br />
   <img src="https://img.shields.io/github/issues/GimliCZ/TwitchEventSub_Websocket" alt="Issues" />
@@ -18,7 +18,7 @@
 * For more information on Twitch EventSub, refer to the [Twitch EventSub Documentation](https://dev.twitch.tv/docs/eventsub/).
 
 ## Implementation
-* **Client Id** is identifier of your aplication
+* **Client Id** is identifier of your application
 * **User Id** is identifier of twitch user
 * **AccessToken** is token requested via bearer token of user
 * TwitchEventSub Library contains set of enums **SubscriptionType** which are setting contens of list of subscriptions

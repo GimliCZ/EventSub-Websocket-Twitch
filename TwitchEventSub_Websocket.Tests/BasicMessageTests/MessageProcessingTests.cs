@@ -10,7 +10,8 @@ namespace TwitchEventSub_Websocket.Tests.BasicMessageTests
 {
     public class MessageProcessingTests
     {
-        private const string AddPath = "BasicMessageTests\\BasicMessages";
+        private static readonly string AddPath = Path.Combine("BasicMessageTests", "BasicMessages");
+
 
         [Fact]
         public async Task DeserializeMessageAsync_WhenGivenSessionWelcomeMessage_ReturnsWebSocketWelcomeMessage()
