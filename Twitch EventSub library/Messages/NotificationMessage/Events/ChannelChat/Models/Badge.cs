@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat
+namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat.Models
 {
     public class Badge
     {

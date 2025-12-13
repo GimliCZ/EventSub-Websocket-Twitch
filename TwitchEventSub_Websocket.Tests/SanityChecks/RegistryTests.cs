@@ -14,11 +14,7 @@ namespace TwitchEventSub_Websocket.Tests.SanityChecks
         public void TestRegistryKeyCountMatchesRegistryItemCount()
         {
             // Retrieve all constants from RegistryKeys
-            var registryKeys = typeof(RegisterKeys)
-                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                .Where(x => x.Name != nameof(RegisterKeys.KeysList))
-                .Select(field => field.GetValue(null) as string)
-                .ToList();
+            var registryKeys = RegisterKeysExtensions.GetAllKeys().Select(x => x.ToEventString()).ToList();
 
             // Retrieve all RegistryItems from Registry class
             var registryItems = typeof(Register)
@@ -44,11 +40,7 @@ namespace TwitchEventSub_Websocket.Tests.SanityChecks
         public void TestRegistryKeyCountMatchesEventProviderCount()
         {
             // Retrieve all constants from RegistryKeys
-            var registryKeys = typeof(RegisterKeys)
-                .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                .Where(x => x.Name != nameof(RegisterKeys.KeysList))
-                .Select(field => field.GetValue(null) as string)
-                .ToList();
+            var registryKeys = RegisterKeysExtensions.GetAllKeys().ToList();
 
             // Retrieve all events from EventProvider
             var eventFields = typeof(EventProvider)

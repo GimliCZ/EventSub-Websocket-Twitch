@@ -5,6 +5,15 @@ namespace Twitch.EventSub.Messages.NotificationMessage.Events
 {
     public class ConduitShardDisabledEvent : WebSocketNotificationEvent
     {
+        [JsonProperty("broadcaster_user_id")]
+        public string BroadcasterUserId { get; set; }
+
+        [JsonProperty("broadcaster_user_login")]
+        public string BroadcasterUserLogin { get; set; }
+
+        [JsonProperty("broadcaster_user_name")]
+        
+        public string BroadcasterUserName { get; set; }
         [JsonProperty("conduit_id")]
         public string ConduitId { get; set; }
 

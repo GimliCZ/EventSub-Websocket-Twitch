@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints
+namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints.Models
 {
     public class UnlockedEmote
     {

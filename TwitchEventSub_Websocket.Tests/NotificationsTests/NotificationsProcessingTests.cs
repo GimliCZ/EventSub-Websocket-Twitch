@@ -1,5 +1,7 @@
 ﻿using Twitch.EventSub.Messages.NotificationMessage;
 using Twitch.EventSub.Messages.NotificationMessage.Events;
+using Twitch.EventSub.Messages.NotificationMessage.Events.Automod;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelBits;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelCharity;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelCheer;
@@ -10,6 +12,7 @@ using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelModerator;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoll;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPrediction;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShared;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShield;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShoutout;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelSubscription;
@@ -17,6 +20,7 @@ using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelUnban;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelVIP;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelWarning;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Stream;
+using Twitch.EventSub.Messages.NotificationMessage.Events.User;
 using Twitch.EventSub.User;
 
 namespace TwitchEventSub_Websocket.Tests.NotificationsTests
@@ -25,6 +29,139 @@ namespace TwitchEventSub_Websocket.Tests.NotificationsTests
     {
         private readonly string AddPath = Path.Combine("NotificationsTests","NotificationsMessages");
 
+        [Fact]
+        public async Task MessageProcessing_AutomodMessageHold()
+        {
+            var messageString = await HelperFunctions.LoadNotificationAsync(
+                "automod.message.hold",
+                "1",
+                AddPath,
+                "AutomodMessageHold.json"
+                );
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<AutomodMessageHoldEvent>(Event);
+            var automodhold = (AutomodMessageHoldEvent)Event;
+            Assert.Equal(5, automodhold.Level);
+            Assert.Equal("prefix", automodhold.Fragments.Cheermotes.First().Prefix);
+                
+        }
+        [Fact]
+        public async Task MessageProcessing_AutomodMessageHoldV2()
+        {
+            var messageString = await HelperFunctions.LoadNotificationAsync(
+                "automod.message.hold",
+                "2",
+                AddPath,
+                "AutomodMessageHoldV2.json"
+            );
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<AutomodMessageHoldEventV2>(Event);
+            var automodhold = (AutomodMessageHoldEventV2)Event;
+            Assert.Equal(1, automodhold.Automod.Level);
+        }
+        [Fact]
+        public async Task MessageProcessing_AutomodUpdate()
+        {
+            var messageString = await HelperFunctions.LoadNotificationAsync(
+                "automod.message.update",
+                "1",
+                AddPath,
+                "AutomodMessageUpdate.json"
+            );
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<AutomodMessageUpdateEvent>(Event);
+            var automod = (AutomodMessageUpdateEvent)Event;
+            Assert.Equal(5, automod.Level);
+                
+                
+        }
+        [Fact]
+        public async Task MessageProcessing_AutomodMessageUpdate()
+        {
+            var messageString = await HelperFunctions.LoadNotificationAsync(
+                "automod.message.update",
+                "1",
+                AddPath,
+                "AutomodMessageUpdate.json"
+            );
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<AutomodMessageUpdateEvent>(Event);
+            var automod = (AutomodMessageUpdateEvent)Event;
+            Assert.Equal("baduser", automod.UserName);
+        }
+        [Fact]
+        public async Task MessageProcessing_AutomodMessageUpdateV2()
+        {
+            var messageString = await HelperFunctions.LoadNotificationAsync(
+                "automod.message.update",
+                "2",
+                AddPath,
+                "AutomodMessageUpdateV2.json"
+            );
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<AutomodMessageUpdateEventV2>(Event);
+            var automod = (AutomodMessageUpdateEventV2)Event;
+            Assert.Equal("123", automod.BlockedTerm.TermsFound.First().TermId);
+        }
+        [Fact]
+        public async Task MessageProcessing_AutomodSettingsUpdate()
+        {
+            var messageString = await HelperFunctions.LoadNotificationAsync(
+                "automod.settings.update",
+                "1",
+                AddPath,
+                "AutomodSettingsUpdate.json"
+            );
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<AutomodSettingsUpdateEvent>(Event);
+            var automod = (AutomodSettingsUpdateEvent)Event;
+                
+            Assert.Equal(3, automod.data.First().Aggression);
+        }
+        [Fact]
+        public async Task MessageProcessing_AutomodTermsUpdate()
+        {
+            var messageString = await HelperFunctions.LoadNotificationAsync(
+                "automod.terms.update",
+                "1",
+                AddPath,
+                "AutomodTermsUpdate.json"
+            );
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<AutomodTermsUpdateEvent>(Event);
+            var automod = (AutomodTermsUpdateEvent)Event;
+            Assert.Equal("bad-message-id", automod.Action);
+        }
+        
+        
         [Fact]
         public async Task MessageProcessing_IsConduitShardsDisabled()
         {
@@ -1623,10 +1760,137 @@ namespace TwitchEventSub_Websocket.Tests.NotificationsTests
             Assert.Equal("webhook", notificationMessage?.Payload?.Subscription.Transport.Method);
             Assert.Equal("423374343", notificationMessage?.Payload?.Subscription.Condition.BroadcasterUserId);
         }
+        [Fact]
+        public async Task MessageProcessing_ChannelBitsUse()
+        {
+                string messageString = await HelperFunctions.LoadNotificationAsync(
+                    "channel.bits.use",
+                    "1",
+                    AddPath,
+                    "ChannelBitsUse.json"
+                );
+                // Act
+                var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+
+                // Assert
+                Assert.NotNull(result);
+                Assert.IsType<WebSocketNotificationMessage>(result);
+                var notificationMessage = (WebSocketNotificationMessage)result;
+                var Event = notificationMessage?.Payload?.Event;
+                Assert.IsType<ChannelBitsUseEvent>(Event);
+                var bits = (ChannelBitsUseEvent)Event;
+                Assert.Equal(2, bits.Bits);
+        }
+
+        [Fact]
+        public async Task MessageProcessing_ChannelSharedChatSessionBegin()
+        {
+            string messageString = await HelperFunctions.LoadNotificationAsync(
+                "channel.shared_chat.begin",
+                "1",
+                AddPath,
+                "ChannelSharedChatSessionBegin.json"
+            );
+            // Act
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<ChannelSharedChatSessionBeginEvent>(Event);
+            var begin = (ChannelSharedChatSessionBeginEvent)Event;
+            Assert.Equal("1971641", begin.Participants.First().BroadcasterUserId);
+        }
+        [Fact]
+        public async Task MessageProcessing_ChannelSharedChatSessionUpdate()
+        {
+            string messageString = await HelperFunctions.LoadNotificationAsync(
+                "channel.shared_chat.update",
+                "1",
+                AddPath,
+                "ChannelSharedChatSessionUpdate.json"
+            );
+            // Act
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<ChannelSharedChatSessionUpdateEvent>(Event);
+            var update = (ChannelSharedChatSessionUpdateEvent)Event;
+            Assert.Equal("332211", update.Participants.Last().BroadcasterUserId);
+        }
+        [Fact]
+        public async Task MessageProcessing_ChannelSharedChatSessionEnd()
+        {
+            string messageString = await HelperFunctions.LoadNotificationAsync(
+                "channel.shared_chat.end",
+                "1",
+                AddPath,
+                "ChannelSharedChatSessionEnd.json"
+            );
+            // Act
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<ChannelSharedChatSessionEndEvent>(Event);
+            var end = (ChannelSharedChatSessionEndEvent)Event;
+            Assert.Equal("1971641",  end.BroadcasterUserId);
+        }
+
+        [Fact]
+        public async Task MessageProcessing_UserUpdate()
+        {
+            string messageString = await HelperFunctions.LoadNotificationAsync(
+                "user.update",
+                "1",
+                AddPath,
+                "UserUpdate.json"
+            );
+            // Act
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<UserUpdateEvent>(Event);
+            var userUpdate = (UserUpdateEvent)Event;
+            Assert.Equal("1337",userUpdate.UserId);
+        }
+
+        [Fact]
+        public async Task MessageProcessing_UserWhisperReceived()
+        {
+            string messageString = await HelperFunctions.LoadNotificationAsync(
+                "user.whisper.message",
+                "1",
+                AddPath,
+                "UserWhisperReceived.json"
+            );
+            // Act
+            var result = await MessageProcessing.DeserializeMessageAsync(messageString);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<WebSocketNotificationMessage>(result);
+            var notificationMessage = (WebSocketNotificationMessage)result;
+            var Event = notificationMessage?.Payload?.Event;
+            Assert.IsType<UserWhisperReceivedEvent>(Event);
+            var wisper = (UserWhisperReceivedEvent)Event;
+            Assert.Equal("a secret", wisper.Whisper.Text);
+        }
 
         //UserAuthGrand is for webhook
         //UserAuthRevoke is for webhook
-        //UserUpdate is anomalous
-        //WhisperReceiver is anomalous
     }
 }

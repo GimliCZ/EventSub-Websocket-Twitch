@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelSubscription;
 
-namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat
+namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat.Models
 {
     public class Fragment
     {

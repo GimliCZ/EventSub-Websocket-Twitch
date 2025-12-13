@@ -8,6 +8,7 @@ using Twitch.EventSub.Messages.ReconnectMessage;
 using Twitch.EventSub.Messages.RevocationMessage;
 using Twitch.EventSub.Messages.SharedContents;
 using Twitch.EventSub.Messages.WelcomeMessage;
+using Twitch.EventSub.SubsRegister.Models;
 
 namespace Twitch.EventSub.User
 {
@@ -21,8 +22,16 @@ namespace Twitch.EventSub.User
             };
 
             var eventType = payload["subscription"]?["type"]?.ToObject<string>();
+            var version = payload["subscription"]?["version"]?.ToObject<string>();
 
-            if (eventType != null && Twitch.EventSub.SubsRegister.Register.RegisterDictionary.TryGetValue(eventType, out var registryItem))
+            if (eventType == null || version == null)
+            {
+                return resultMessage;
+            }
+            
+            var key = new RegisterKeyVersion(eventType, version);
+
+            if (Twitch.EventSub.SubsRegister.Register.RegisterDictionaryByVersion.TryGetValue(key, out var registryItem))
             {
                 var eventTypeObject = registryItem.SpecificObject;
                 var eventTypeInstance = payload["event"]?.ToObject(eventTypeObject);

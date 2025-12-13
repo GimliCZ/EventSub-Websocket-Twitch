@@ -4,6 +4,15 @@ namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelGuest
 {
     public class ChannelGuestStarGuestUpdateEvent : WebSocketNotificationEvent
     {
+        [JsonProperty("broadcaster_user_id")]
+        public string BroadcasterUserId { get; set; }
+
+        [JsonProperty("broadcaster_user_login")]
+        public string BroadcasterUserLogin { get; set; }
+
+        [JsonProperty("broadcaster_user_name")]
+        public string BroadcasterUserName { get; set; }
+        
         [JsonProperty("session_id")]
         public string SessionId { get; set; }
 

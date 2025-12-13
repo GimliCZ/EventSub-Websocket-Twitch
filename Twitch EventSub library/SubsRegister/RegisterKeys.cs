@@ -1,124 +1,322 @@
-﻿using System.Linq.Expressions;
-using System.Reflection;
+﻿using System.Runtime.Serialization;
 
 namespace Twitch.EventSub.SubsRegister
 {
-    //TOTAL 66
-    public static class RegisterKeys
+    public enum RegisterKeys
     {
-        public const string AutomodMessageHold = "automod.message.hold";
-        public const string AutomodMessageUpdate = "automod.message.update";
-
-        //public const string AutomodSettingsUpdate = "automod.settings.update"; // anomalous structure
-        public const string AutomodTermsUpdate = "automod.terms.update";
-
-        public const string ConduitShardDisabled = "conduit.shard.disabled";
-
-        // public const string DropEntitlementGrant = "drop.entitlement.grant"; // webhook
-        // public const string ExtensionBitsTransactionCreate = "extension.bits_transaction.create"; // webhook
-        public const string ChannelAdBreakBegin = "channel.ad_break.begin";
-
-        public const string ChannelBan = "channel.ban";
-        public const string ChannelFollow = "channel.follow";
-        public const string ChannelGoalBegin = "channel.goal.begin";
-        public const string ChannelGoalEnd = "channel.goal.end";
-        public const string ChannelGoalProgress = "channel.goal.progress";
-        public const string ChannelGuestStarGuestUpdate = "channel.guest_star_guest.update";
-        public const string ChannelGuestStarSessionBegin = "channel.guest_star_session.begin";
-        public const string ChannelGuestStarSessionEnd = "channel.guest_star_session.end";
-        public const string ChannelGuestStarSettingsUpdate = "channel.guest_star_settings.update";
-        public const string ChannelHypeTrainBegin = "channel.hype_train.begin";
-        public const string ChannelHypeTrainEnd = "channel.hype_train.end";
-        public const string ChannelHypeTrainProgress = "channel.hype_train.progress";
-        public const string ChannelCharityCampaignProgress = "channel.charity_campaign.progress";
-        public const string ChannelCharityCampaignStart = "channel.charity_campaign.start";
-        public const string ChannelCharityCampaignStop = "channel.charity_campaign.stop";
-        public const string ChannelCharityDonation = "channel.charity_campaign.donate";
-        public const string ChannelChatClear = "channel.chat.clear";
-        public const string ChannelChatClearUserMessages = "channel.chat.clear_user_messages";
-        public const string ChannelChatMessage = "channel.chat.message";
-        public const string ChannelChatMessageDelete = "channel.chat.message_delete";
-        public const string ChannelChatNotification = "channel.chat.notification";
-        public const string ChannelChatSettingsUpdate = "channel.chat_settings.update";
-        public const string ChannelChatUserMessageHold = "channel.chat.user_message_hold";
-        public const string ChannelChatUserMessageUpdate = "channel.chat.user_message_update";
-        public const string ChannelCheer = "channel.cheer";
-        public const string ChannelModeratorAdd = "channel.moderator.add";
-        public const string ChannelModeratorRemove = "channel.moderator.remove";
-        public const string ChannelPointsAutomaticRewardRedemptionAdd = "channel.channel_points_automatic_reward_redemption.add";
-        public const string ChannelPointsCustomRewardAdd = "channel.channel_points_custom_reward.add";
-        public const string ChannelPointsCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add";
-        public const string ChannelPointsCustomRewardRedemptionUpdate = "channel.channel_points_custom_reward_redemption.update";
-        public const string ChannelPointsCustomRewardRemove = "channel.channel_points_custom_reward.remove";
-        public const string ChannelPointsCustomRewardUpdate = "channel.channel_points_custom_reward.update";
-        public const string ChannelPollBegin = "channel.poll.begin";
-        public const string ChannelPollEnd = "channel.poll.end";
-        public const string ChannelPollProgress = "channel.poll.progress";
-        public const string ChannelPredictionBegin = "channel.prediction.begin";
-        public const string ChannelPredictionEnd = "channel.prediction.end";
-        public const string ChannelPredictionLock = "channel.prediction.lock";
-        public const string ChannelPredictionProgress = "channel.prediction.progress";
-        public const string ChannelRaid = "channel.raid";
-        public const string ChannelShieldModeBegin = "channel.shield_mode.begin";
-        public const string ChannelShieldModeEnd = "channel.shield_mode.end";
-        public const string ChannelShoutoutCreate = "channel.shoutout.create";
-        public const string ChannelShoutoutReceived = "channel.shoutout.receive";
-        public const string ChannelSubscribe = "channel.subscribe";
-        public const string ChannelSubscriptionEnd = "channel.subscription.end";
-        public const string ChannelSubscriptionGift = "channel.subscription.gift";
-        public const string ChannelSubscriptionMessage = "channel.subscription.message";
-
-        // public const string UserAuthorizationGrant = "user.authorization.grant"; // webhook
-        // public const string UserAuthorizationRevoke = "user.authorization.revoke"; // webhook
-        // public const string UserUpdate = "user.update"; // anomalous structure
-        // public const string WhisperReceived = "user.whisper.message"; // anomalous structure
-        public const string ChannelSuspiciousUserMessage = "channel.suspicious_user.message";
-
-        public const string ChannelSuspiciousUserUpdate = "channel.suspicious_user.update";
-        public const string ChannelUnban = "channel.unban";
-        public const string ChannelUnbanRequestCreate = "channel.unban_request.create";
-        public const string ChannelUnbanRequestResolve = "channel.unban_request.resolve";
-        public const string ChannelUpdate = "channel.update";
-        public const string ChannelVIPAdd = "channel.vip.add";
-        public const string ChannelVIPRemove = "channel.vip.remove";
-        public const string ChannelWarningAcknowledge = "channel.warning.acknowledge";
-        public const string ChannelWarningSend = "channel.warning.send";
-        public const string StreamOffline = "stream.offline";
-        public const string StreamOnline = "stream.online";
-
-        public static readonly List<string> KeysList = GetRegistryKeysList();
-
-        public static List<string> GetRegistryKeysList()
+        // Webhook-only events (not supported in WebSocket/EventSub)
+        // [EnumMember(Value = "drop.entitlement.grant")]
+        // DropEntitlementGrant,
+        
+        // [EnumMember(Value = "extension.bits_transaction.create")]
+        // ExtensionBitsTransactionCreate,
+        
+        // [EnumMember(Value = "user.authorization.grant")]
+        // UserAuthorizationGrant,
+        
+        // [EnumMember(Value = "user.authorization.revoke")]
+        // UserAuthorizationRevoke,
+        
+        [EnumMember(Value = "user.whisper.message")]
+        UserWhisperReceived,
+        
+        [EnumMember(Value = "automod.message.hold")]
+        AutomodMessageHold,
+        
+        [EnumMember(Value = "automod.message.hold")]
+        AutomodMessageHoldV2,
+        
+        [EnumMember(Value = "automod.message.update")]
+        AutomodMessageUpdate,
+        
+        [EnumMember(Value = "automod.message.update")]
+        AutomodMessageUpdateV2,
+        
+        [EnumMember(Value = "automod.terms.update")]
+        AutomodTermsUpdate,
+        
+        [EnumMember(Value = "automod.settings.update")]
+        AutomodSettingsUpdate,
+        
+        [EnumMember(Value = "conduit.shard.disabled")]
+        ConduitShardDisabled,
+        
+        [EnumMember(Value = "channel.ad_break.begin")]
+        ChannelAdBreakBegin,
+        
+        [EnumMember(Value = "channel.ban")]
+        ChannelBan,
+        
+        [EnumMember(Value = "channel.follow")]
+        ChannelFollow,
+        
+        [EnumMember(Value = "channel.goal.begin")]
+        ChannelGoalBegin,
+        
+        [EnumMember(Value = "channel.goal.end")]
+        ChannelGoalEnd,
+        
+        [EnumMember(Value = "channel.goal.progress")]
+        ChannelGoalProgress,
+        
+        [EnumMember(Value = "channel.guest_star_guest.update")]
+        ChannelGuestStarGuestUpdate,
+        
+        [EnumMember(Value = "channel.guest_star_session.begin")]
+        ChannelGuestStarSessionBegin,
+        
+        [EnumMember(Value = "channel.guest_star_session.end")]
+        ChannelGuestStarSessionEnd,
+        
+        [EnumMember(Value = "channel.guest_star_settings.update")]
+        ChannelGuestStarSettingsUpdate,
+        
+        [EnumMember(Value = "channel.hype_train.begin")]
+        ChannelHypeTrainBegin,
+        
+        [EnumMember(Value = "channel.hype_train.end")]
+        ChannelHypeTrainEnd,
+        
+        [EnumMember(Value = "channel.hype_train.progress")]
+        ChannelHypeTrainProgress,
+        
+        [EnumMember(Value = "channel.charity_campaign.progress")]
+        ChannelCharityCampaignProgress,
+        
+        [EnumMember(Value = "channel.charity_campaign.start")]
+        ChannelCharityCampaignStart,
+        
+        [EnumMember(Value = "channel.charity_campaign.stop")]
+        ChannelCharityCampaignStop,
+        
+        [EnumMember(Value = "channel.charity_campaign.donate")]
+        ChannelCharityDonation,
+        
+        [EnumMember(Value = "channel.chat.clear")]
+        ChannelChatClear,
+        
+        [EnumMember(Value = "channel.chat.clear_user_messages")]
+        ChannelChatClearUserMessages,
+        
+        [EnumMember(Value = "channel.chat.message")]
+        ChannelChatMessage,
+        
+        [EnumMember(Value = "channel.chat.message_delete")]
+        ChannelChatMessageDelete,
+        
+        [EnumMember(Value = "channel.chat.notification")]
+        ChannelChatNotification,
+        
+        [EnumMember(Value = "channel.chat_settings.update")]
+        ChannelChatSettingsUpdate,
+        
+        [EnumMember(Value = "channel.chat.user_message_hold")]
+        ChannelChatUserMessageHold,
+        
+        [EnumMember(Value = "channel.chat.user_message_update")]
+        ChannelChatUserMessageUpdate,
+        
+        [EnumMember(Value = "channel.shared_chat.begin")]
+        ChannelSharedChatSessionBegin,
+        
+        [EnumMember(Value = "channel.shared_chat.update")]
+        ChannelSharedChatSessionUpdate,
+        
+        [EnumMember(Value = "channel.shared_chat.end")]
+        ChannelSharedChatSessionEnd,
+        
+        [EnumMember(Value = "channel.cheer")]
+        ChannelCheer,
+        
+        [EnumMember(Value = "channel.moderator.add")]
+        ChannelModeratorAdd,
+        
+        [EnumMember(Value = "channel.moderator.remove")]
+        ChannelModeratorRemove,
+        
+        [EnumMember(Value = "channel.channel_points_automatic_reward_redemption.add")]
+        ChannelPointsAutomaticRewardRedemptionAdd,
+        
+        [EnumMember(Value = "channel.channel_points_automatic_reward_redemption.add")]
+        ChannelPointsAutomaticRewardRedemptionAddV2,
+        
+        [EnumMember(Value = "channel.channel_points_custom_reward.add")]
+        ChannelPointsCustomRewardAdd,
+        
+        [EnumMember(Value = "channel.channel_points_custom_reward_redemption.add")]
+        ChannelPointsCustomRewardRedemptionAdd,
+        
+        [EnumMember(Value = "channel.channel_points_custom_reward_redemption.update")]
+        ChannelPointsCustomRewardRedemptionUpdate,
+        
+        [EnumMember(Value = "channel.channel_points_custom_reward.remove")]
+        ChannelPointsCustomRewardRemove,
+        
+        [EnumMember(Value = "channel.channel_points_custom_reward.update")]
+        ChannelPointsCustomRewardUpdate,
+        
+        [EnumMember(Value = "channel.poll.begin")]
+        ChannelPollBegin,
+        
+        [EnumMember(Value = "channel.poll.progress")]
+        ChannelPollProgress,
+        
+        [EnumMember(Value = "channel.poll.end")]
+        ChannelPollEnd,
+        
+        [EnumMember(Value = "channel.prediction.begin")]
+        ChannelPredictionBegin,
+        
+        [EnumMember(Value = "channel.prediction.progress")]
+        ChannelPredictionProgress,
+        
+        [EnumMember(Value = "channel.prediction.lock")]
+        ChannelPredictionLock,
+        
+        [EnumMember(Value = "channel.prediction.end")]
+        ChannelPredictionEnd,
+        
+        [EnumMember(Value = "channel.raid")]
+        ChannelRaid,
+        
+        [EnumMember(Value = "channel.shield_mode.begin")]
+        ChannelShieldModeBegin,
+        
+        [EnumMember(Value = "channel.shield_mode.end")]
+        ChannelShieldModeEnd,
+        
+        [EnumMember(Value = "channel.shoutout.create")]
+        ChannelShoutoutCreate,
+        
+        [EnumMember(Value = "channel.shoutout.receive")]
+        ChannelShoutoutReceived,
+        
+        [EnumMember(Value = "channel.subscribe")]
+        ChannelSubscribe,
+        
+        [EnumMember(Value = "channel.subscription.end")]
+        ChannelSubscriptionEnd,
+        
+        [EnumMember(Value = "channel.subscription.gift")]
+        ChannelSubscriptionGift,
+        
+        [EnumMember(Value = "channel.subscription.message")]
+        ChannelSubscriptionMessage,
+        
+        [EnumMember(Value = "channel.suspicious_user.message")]
+        ChannelSuspiciousUserMessage,
+        
+        [EnumMember(Value = "channel.suspicious_user.update")]
+        ChannelSuspiciousUserUpdate,
+        
+        [EnumMember(Value = "channel.unban")]
+        ChannelUnban,
+        
+        [EnumMember(Value = "channel.unban_request.create")]
+        ChannelUnbanRequestCreate,
+        
+        [EnumMember(Value = "channel.unban_request.resolve")]
+        ChannelUnbanRequestResolve,
+        
+        [EnumMember(Value = "channel.bits.use")]
+        ChannelBitsUse,
+        
+        [EnumMember(Value = "channel.update")]
+        ChannelUpdate,
+        
+        [EnumMember(Value = "channel.vip.add")]
+        ChannelVIPAdd,
+        
+        [EnumMember(Value = "channel.vip.remove")]
+        ChannelVIPRemove,
+        
+        [EnumMember(Value = "channel.warning.acknowledge")]
+        ChannelWarningAcknowledge,
+        
+        [EnumMember(Value = "channel.warning.send")]
+        ChannelWarningSend,
+        
+        [EnumMember(Value = "stream.offline")]
+        StreamOffline,
+        
+        [EnumMember(Value = "stream.online")]
+        StreamOnline,
+        
+        [EnumMember(Value = "user.update")]
+        UserUpdate
+    }
+    
+    public static class RegisterKeysExtensions
+    {
+        private static readonly Dictionary<RegisterKeys, string> _enumToString;
+        private static readonly Dictionary<string, RegisterKeys> _stringToEnum;
+        
+        static RegisterKeysExtensions()
         {
-            var type = typeof(RegisterKeys);
-
-            // Get all public static fields
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static).Where(x => x.Name != nameof(KeysList));
-
-            // Create a list to hold the values
-            var registryKeysList = new List<string>();
-
-            foreach (var field in fields)
+            _enumToString = new Dictionary<RegisterKeys, string>();
+            _stringToEnum = new Dictionary<string, RegisterKeys>();
+            
+            foreach (RegisterKeys key in Enum.GetValues(typeof(RegisterKeys)))
             {
-                // Create a delegate for each static field getter
-                var getter = CreateStaticFieldGetter(type, field.Name);
-                // Invoke the getter and add the value to the list
-                registryKeysList.Add(getter());
+                var memberInfo = typeof(RegisterKeys).GetMember(key.ToString())[0];
+                var attribute = memberInfo.GetCustomAttributes(typeof(EnumMemberAttribute), false)
+                    .FirstOrDefault() as EnumMemberAttribute;
+                
+                if (attribute != null)
+                {
+                    _enumToString[key] = attribute.Value;
+                    
+                    // Store first occurrence for reverse lookup
+                    if (!_stringToEnum.ContainsKey(attribute.Value))
+                    {
+                        _stringToEnum[attribute.Value] = key;
+                    }
+                }
             }
-
-            return registryKeysList;
         }
-
-        private static Func<string> CreateStaticFieldGetter(Type type, string fieldName)
+        
+        /// <summary>
+        /// Converts the enum to its string representation
+        /// </summary>
+        public static string ToEventString(this RegisterKeys key)
         {
-            var field = type.GetField(fieldName, BindingFlags.Public | BindingFlags.Static)
-                         ?? throw new ArgumentException($"Field '{fieldName}' not found.");
-
-            var fieldExp = Expression.Field(null, field);
-            var castExp = Expression.Convert(fieldExp, typeof(string)); // Convert to string
-            var lambda = Expression.Lambda<Func<string>>(castExp);
-
-            return lambda.Compile();
+            return _enumToString.TryGetValue(key, out var value) ? value : key.ToString();
+        }
+        
+        /// <summary>
+        /// Parses a string to its RegisterKeys enum value
+        /// </summary>
+        public static RegisterKeys FromEventString(string eventString)
+        {
+            if (_stringToEnum.TryGetValue(eventString, out var key))
+            {
+                return key;
+            }
+            throw new ArgumentException($"Unknown event string: {eventString}");
+        }
+        
+        /// <summary>
+        /// Tries to parse a string to its RegisterKeys enum value
+        /// </summary>
+        public static bool TryFromEventString(string eventString, out RegisterKeys key)
+        {
+            return _stringToEnum.TryGetValue(eventString, out key);
+        }
+        
+        /// <summary>
+        /// Gets all unique event strings
+        /// </summary>
+        public static IEnumerable<string> GetAllEventStrings()
+        {
+            return _stringToEnum.Keys;
+        }
+        
+        /// <summary>
+        /// Gets all enum values
+        /// </summary>
+        public static IEnumerable<RegisterKeys> GetAllKeys()
+        {
+            return Enum.GetValues(typeof(RegisterKeys)).Cast<RegisterKeys>();
         }
     }
-};
+}

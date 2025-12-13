@@ -1,0 +1,53 @@
+{
+  "subscription": {
+    "id": "f1c2a387-161a-49f9-a165-0f21d7a4e1c4",
+    "type": "automod.message.hold",
+    "version": "1",
+    "status": "enabled",
+    "cost": 0,
+    "condition": {
+      "broadcaster_user_id": "1337",
+      "moderator_user_id": "9001"
+    },
+    "transport": {
+      "method": "webhook",
+      "callback": "https://example.com/webhooks/callback"
+    },
+    "created_at": "2023-04-11T10:11:12.123Z"
+  },
+  "event": {
+    "broadcaster_user_id": "1337",
+    "broadcaster_user_name": "blah",
+    "broadcaster_user_login": "blahblah",
+    "user_id": "456789012",
+    "user_name": "baduser",
+    "user_login": "baduserbla",
+    "message_id": "bad-message-id",
+    "message": "This is a bad message… ",
+    "level": 5,
+    "category": "aggressive",
+    "held_at": "2022-12-02T15:00:00.00Z",
+    "fragments": {
+      "emotes": [
+        {
+          "text": "badtextemote1",
+          "id": "emote-123",
+          "set-id": "set-emote-1"
+        },
+        {
+          "text": "badtextemote2",
+          "id": "emote-234",
+          "set-id": "set-emote-2"
+        }
+      ],
+      "cheermotes": [
+        {
+          "text": "badtextcheermote1",
+          "amount": 1000,
+          "prefix": "prefix",
+          "tier": 1
+        }
+      ]
+    }
+  }
+}
