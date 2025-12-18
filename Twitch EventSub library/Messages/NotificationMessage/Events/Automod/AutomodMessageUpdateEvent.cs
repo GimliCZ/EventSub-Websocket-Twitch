@@ -5,6 +5,15 @@ namespace Twitch.EventSub.Messages.NotificationMessage.Events.Automod
 {
     public class AutomodMessageUpdateEvent : WebSocketNotificationEvent
     {
+        [JsonProperty("broadcaster_user_id")]
+        public string BroadcasterUserId { get; set; }
+
+        [JsonProperty("broadcaster_user_login")]
+        public string BroadcasterUserLogin { get; set; }
+
+        [JsonProperty("broadcaster_user_name")]
+        public string BroadcasterUserName { get; set; }
+        
         [JsonProperty("user_id")]
         public string UserId { get; set; }
 
@@ -42,6 +51,6 @@ namespace Twitch.EventSub.Messages.NotificationMessage.Events.Automod
         public DateTime HeldAt { get; set; }
 
         [JsonProperty("fragments")]
-        public Fragments Fragments { get; set; }
+        public FragmentsOld Fragments { get; set; }
     }
 }

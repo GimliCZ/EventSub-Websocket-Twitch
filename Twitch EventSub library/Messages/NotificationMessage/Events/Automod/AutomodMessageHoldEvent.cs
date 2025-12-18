@@ -1,35 +1,43 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Automod.Models;
 
-namespace Twitch.EventSub.Messages.NotificationMessage.Events.Automod
+namespace Twitch.EventSub.Messages.NotificationMessage.Events.Automod;
+
+public class AutomodMessageHoldEvent : WebSocketNotificationEvent
 {
-    public class AutomodMessageHoldEvent : WebSocketNotificationEvent
-    {
-        [JsonProperty("user_id")]
-        public string UserId { get; set; }
+    [JsonProperty("broadcaster_user_id")]
+    public string BroadcasterUserId { get; set; }
 
-        [JsonProperty("user_name")]
-        public string UserName { get; set; }
+    [JsonProperty("broadcaster_user_login")]
+    public string BroadcasterUserLogin { get; set; }
 
-        [JsonProperty("user_login")]
-        public string UserLogin { get; set; }
+    [JsonProperty("broadcaster_user_name")]
+    public string BroadcasterUserName { get; set; }
+        
+    [JsonProperty("user_id")]
+    public string UserId { get; set; }
 
-        [JsonProperty("message_id")]
-        public string MessageId { get; set; }
+    [JsonProperty("user_name")]
+    public string UserName { get; set; }
 
-        [JsonProperty("message")]
-        public string Message { get; set; }
+    [JsonProperty("user_login")]
+    public string UserLogin { get; set; }
 
-        [JsonProperty("level")]
-        public int Level { get; set; }
+    [JsonProperty("message_id")]
+    public string MessageId { get; set; }
 
-        [JsonProperty("category")]
-        public string Category { get; set; }
+    [JsonProperty("message")]
+    public string Message { get; set; }
 
-        [JsonProperty("held_at")]
-        public DateTime HeldAt { get; set; }
+    [JsonProperty("level")]
+    public int Level { get; set; }
 
-        [JsonProperty("fragments")]
-        public Fragments Fragments { get; set; }
-    }
+    [JsonProperty("category")]
+    public string Category { get; set; }
+
+    [JsonProperty("held_at")]
+    public DateTime HeldAt { get; set; }
+
+    [JsonProperty("fragments")]
+    public FragmentsOld Fragments { get; set; }
 }

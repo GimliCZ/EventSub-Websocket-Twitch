@@ -260,7 +260,37 @@
     <None Update="NotificationsTests\NotificationsMessages\UserUpdate.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="NotificationsTests\NotificationsMessages\WhisperReceived.json">
+    <None Update="NotificationsTests\NotificationsMessages\AutomodMessageHold.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\AutomodMessageHoldV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\AutomodMessageUpdate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\AutomodMessageUpdateV2.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\AutomodSettingsUpdate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\AutomodTermsUpdate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\ChannelBitsUse.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\ChannelSharedChatSessionBegin.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\ChannelSharedChatSessionEnd.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\ChannelSharedChatSessionUpdate.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="NotificationsTests\NotificationsMessages\UserWhisperReceived.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

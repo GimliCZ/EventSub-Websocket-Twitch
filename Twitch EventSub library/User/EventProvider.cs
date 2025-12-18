@@ -6,6 +6,7 @@ using Twitch.EventSub.CoreFunctions;
 using Twitch.EventSub.Interfaces;
 using Twitch.EventSub.Messages.NotificationMessage.Events;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Automod;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelBits;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelCharity;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelCheer;
@@ -14,8 +15,10 @@ using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelGuest;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelHype;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelModerator;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints.Models;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoll;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPrediction;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShared;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShield;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShoutout;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelSubscription;
@@ -24,6 +27,7 @@ using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelUnban;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelVIP;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelWarning;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Stream;
+using Twitch.EventSub.Messages.NotificationMessage.Events.User;
 
 namespace Twitch.EventSub.User
 {
@@ -251,9 +255,21 @@ namespace Twitch.EventSub.User
                 case AutomodMessageUpdateEvent automodMessageUpdateEvent:
                     await OnAutomodMessageUpdateEventAsync.TryInvoke(sender, automodMessageUpdateEvent);
                     break;
+                
+                case AutomodMessageUpdateEventV2 automodMessageUpdateEventV2:
+                    await OnAutomodMessageUpdateV2EventAsync.TryInvoke(sender, automodMessageUpdateEventV2);
+                    break;
 
                 case AutomodMessageHoldEvent automodMessageHoldEvent:
                     await OnAutomodMessageHoldEventAsync.TryInvoke(sender, automodMessageHoldEvent);
+                    break;
+                
+                case AutomodMessageHoldEventV2 automodMessageHoldEventV2:
+                    await OnAutomodMessageHoldV2EventAsync.TryInvoke(sender, automodMessageHoldEventV2);
+                    break;
+                
+                case AutomodSettingsUpdateEvent automodSettingsUpdateEvent:
+                    await OnAutomodSettingsUpdateEventAsync.TryInvoke(sender, automodSettingsUpdateEvent);
                     break;
 
                 case AutomodTermsUpdateEvent automodTermsUpdateEvent:
@@ -284,8 +300,8 @@ namespace Twitch.EventSub.User
                     await OnSuspiciousUserUpdateEventAsync.TryInvoke(sender, channelSuspiciousUserUpdateEvent);
                     break;
 
-                case ConduitShardDisabledEvent ConduitShardDisabledEvent:
-                    await OnConduitShardDisabledEventAsync.TryInvoke(sender, ConduitShardDisabledEvent);
+                case ConduitShardDisabledEvent conduitShardDisabledEvent:
+                    await OnConduitShardDisabledEventAsync.TryInvoke(sender, conduitShardDisabledEvent);
                     break;
 
                 case ChannelUpdateEvent updateEvent:
@@ -382,6 +398,10 @@ namespace Twitch.EventSub.User
 
                 case ChannelPointsAutomaticRewardRedemptionAddEvent channelPointsAutomaticRewardRedemptionAddEvent:
                     await OnPointsAutomaticRewardRedemptionAddEventAsync.TryInvoke(sender, channelPointsAutomaticRewardRedemptionAddEvent);
+                    break;
+                
+                case ChannelPointsAutomaticRewardRedemptionAddV2Event  channelPointsAutomaticRewardRedemptionAddV2Event:
+                    await OnPointsAutomaticRewardRedemptionAddV2EventAsync.TryInvoke(sender, channelPointsAutomaticRewardRedemptionAddV2Event);
                     break;
 
                 case ChannelPointsCustomRewardUpdateEvent customRewardUpdateEvent:
@@ -520,6 +540,31 @@ namespace Twitch.EventSub.User
                 case ChannelWarningSendEvent channelWarningSendEvent:
                     await OnWarningSendEventAsync.TryInvoke(sender, channelWarningSendEvent);
                     break;
+                
+                case ChannelBitsUseEvent channelBitsUseEvent:
+                    await OnBitsUseEventAsync.TryInvoke(sender, channelBitsUseEvent);
+                    break;
+                
+                case ChannelSharedChatSessionBeginEvent channelSharedChatSessionBeginEvent:
+                    await OnSharedChatSessionBeginEventAsync.TryInvoke(sender, channelSharedChatSessionBeginEvent);
+                    break;
+                
+                case ChannelSharedChatSessionUpdateEvent channelSharedChatSessionUpdateEvent:
+                    await OnSharedChatSessionUpdateEventAsync.TryInvoke(sender, channelSharedChatSessionUpdateEvent);
+                    break;
+                
+                case ChannelSharedChatSessionEndEvent channelSharedChatSessionEndEvent:
+                    await OnSharedChatSessionEndEventAsync.TryInvoke(sender, channelSharedChatSessionEndEvent);
+                    break;
+                
+                case UserWhisperReceivedEvent userWhisperReceivedEvent:
+                    await OnWhisperReceivedEventAsync.TryInvoke(sender, userWhisperReceivedEvent);
+                    break;
+                
+                case UserUpdateEvent userUpdateEvent:
+                    await OnUserUpdateEventAsync.TryInvoke(sender, userUpdateEvent);
+                    break;
+                
                 //Cant be used by websocket
 
                 //case UserAuthorizationGrantEvent userAuthorizationGrantEvent:
@@ -529,14 +574,7 @@ namespace Twitch.EventSub.User
                 //case UserAuthorizationRevokeEvent userAuthorizationRevokeEvent:
                 //    await OnUserAuthorizationRevokeEventAsync.TryInvoke(sender, userAuthorizationRevokeEvent);
                 //    break;
-
-                //User update doesnt maintain proper structure.
-                //NOT SUPPORTED
-
-                //case UserUpdateEvent userUpdateEvent:
-                //    await OnUserUpdateEventAsync.TryInvoke(sender, userUpdateEvent);
-                //    break;
-
+                
                 default:
                     throw new NotImplementedException();
             }
@@ -555,7 +593,7 @@ namespace Twitch.EventSub.User
         public event AsyncEventHandler<ChannelChatSettingsUpdateEvent> OnChatSettingsUpdateEventAsync;
 
         public event AsyncEventHandler<AutomodMessageUpdateEvent> OnAutomodMessageUpdateEventAsync;
-
+        
         public event AsyncEventHandler<AutomodTermsUpdateEvent> OnAutomodTermsUpdateEventAsync;
 
         public event AsyncEventHandler<ChannelAdBreakBeginEvent> OnAdBreakBeginEventAsync;
@@ -681,6 +719,17 @@ namespace Twitch.EventSub.User
         //public event AsyncEventHandler<UserAuthorizationGrantEvent> OnUserAuthorizationGrantEventAsync;
         //public event AsyncEventHandler<UserAuthorizationRevokeEvent> OnUserAuthorizationRevokeEventAsync;
         //public event AsyncEventHandler<UserUpdateEvent> OnUserUpdateEventAsync;
+        
+        public event AsyncEventHandler<ChannelSharedChatSessionBeginEvent>  OnSharedChatSessionBeginEventAsync;
+        public event AsyncEventHandler<ChannelSharedChatSessionUpdateEvent>  OnSharedChatSessionUpdateEventAsync; 
+        public event AsyncEventHandler<ChannelSharedChatSessionEndEvent> OnSharedChatSessionEndEventAsync;
+        public event AsyncEventHandler<ChannelBitsUseEvent>  OnBitsUseEventAsync;
+        public event AsyncEventHandler<UserUpdateEvent>  OnUserUpdateEventAsync;
+        public event AsyncEventHandler<UserWhisperReceivedEvent> OnWhisperReceivedEventAsync; 
+        public event AsyncEventHandler<AutomodMessageHoldEventV2>  OnAutomodMessageHoldV2EventAsync; 
+        public event AsyncEventHandler<AutomodMessageUpdateEventV2>  OnAutomodMessageUpdateV2EventAsync; 
+        public event AsyncEventHandler<AutomodSettingsUpdateEvent>  OnAutomodSettingsUpdateEventAsync; 
+        public event AsyncEventHandler<ChannelPointsAutomaticRewardRedemptionAddV2Event>  OnPointsAutomaticRewardRedemptionAddV2EventAsync; 
 
         #endregion Available events
     }

@@ -18,7 +18,7 @@
     "user_id": "1337",
     "user_login": "cool_user",
     "user_name": "Cool_User",
-    "email": "user@email.com", // Requires user:read:email scope
+    "email": "user@email.com",
     "email_verified": true,
     "description": "cool description"
   }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat.Models;
 
 namespace Twitch.EventSub.Messages.NotificationMessage.Events.ChannelSubscription
 {

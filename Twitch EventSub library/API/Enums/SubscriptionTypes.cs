@@ -3,6 +3,7 @@
     public enum SubscriptionTypes
     {
         AutomodMessageHold,
+        AutomodMessageHoldV2,
 
         // Channel Subscriptions
         ConduitShardDisabled,
@@ -10,12 +11,16 @@
         ChannelUpdate,
         ChannelFollow,
         ChannelAdBreakBegin,
+        ChannelBitsUse,
         ChannelChatClear,
         ChannelChatClearUserMessages,
         ChannelChatMessage,
         ChannelChatUserMessageHold,
         ChannelChatMessageDelete,
         ChannelChatNotification,
+        ChannelSharedChatSessionBegin,
+        ChannelSharedChatSessionUpdate,
+        ChannelSharedChatSessionEnd,
         ChannelSubscribe,
         ChannelSubscriptionEnd,
         ChannelSubscriptionGift,
@@ -34,6 +39,7 @@
         ChannelWarningSend,
         ChannelChatUserMessageUpdate,
         ChannelPointsAutomaticRewardRedemptionAdd,
+        ChannelPointsAutomaticRewardRedemptionAddV2,
 
         //Beta
         BetaChannelGuestStarSessionBegin,
@@ -112,12 +118,13 @@
         UserAuthorizationGrant,
         UserAuthorizationRevoke,
         */
-
-        // User Update
+        
         UserUpdate,
-
+        UserWhisperReceived,
         AutomodMessageUpdate,
+        AutomodMessageUpdateV2,
         AutomodTermsUpdate,
+        AutomodSettingsUpdate,
         SuspiciousUserMessage,
         ChannelChatSettingsUpdate,
         StreamOnline

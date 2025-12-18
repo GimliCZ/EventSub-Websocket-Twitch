@@ -1,6 +1,8 @@
-﻿using Twitch.EventSub.API.Enums;
+﻿using System.Reflection;
+using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.Messages.NotificationMessage.Events;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Automod;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelBits;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelCharity;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelChat;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelCheer;
@@ -9,8 +11,10 @@ using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelGuest;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelHype;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelModerator;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoints.Models;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPoll;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelPrediction;
+using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShared;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShield;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelShoutout;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelSubscription;
@@ -19,44 +23,79 @@ using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelUnban;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelVIP;
 using Twitch.EventSub.Messages.NotificationMessage.Events.ChannelWarning;
 using Twitch.EventSub.Messages.NotificationMessage.Events.Stream;
+using Twitch.EventSub.Messages.NotificationMessage.Events.User;
 using Twitch.EventSub.SubsRegister.Models;
 
 namespace Twitch.EventSub.SubsRegister
 {
-    //TODO:
-    //Add  RegisterItem dictionary refrection to simplify changes.
     public static class Register
     {
         public static readonly RegisterItem RegAutomodMessageHold = new RegisterItem
         {
-            Key = RegisterKeys.AutomodMessageHold,
+            Key = RegisterKeys.AutomodMessageHold.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(AutomodMessageHoldEvent),
             SubscriptionType = SubscriptionTypes.AutomodMessageHold,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
+        
+        public static readonly RegisterItem RegAutomodMessageHoldV2 = new RegisterItem
+        {
+            Key = RegisterKeys.AutomodMessageHoldV2.ToEventString(),
+            Ver = "2",
+            SpecificObject = typeof(AutomodMessageHoldEventV2),
+            SubscriptionType = SubscriptionTypes.AutomodMessageHoldV2,
+            Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
+        };
 
         public static readonly RegisterItem RegAutomodMessageUpdate = new RegisterItem
         {
-            Key = RegisterKeys.AutomodMessageUpdate,
+            Key = RegisterKeys.AutomodMessageUpdate.ToEventString(),
             Ver = "1",
-            SpecificObject = typeof(AutomodMessageHoldEvent),
+            SpecificObject = typeof(AutomodMessageUpdateEvent),
             SubscriptionType = SubscriptionTypes.AutomodMessageUpdate,
+            Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
+        };
+        
+        public static readonly RegisterItem RegAutomodMessageUpdateV2 = new RegisterItem
+        {
+            Key = RegisterKeys.AutomodMessageUpdateV2.ToEventString(),
+            Ver = "2",
+            SpecificObject = typeof(AutomodMessageUpdateEventV2),
+            SubscriptionType = SubscriptionTypes.AutomodMessageUpdateV2,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
         public static readonly RegisterItem RegAutomodTermsUpdate = new RegisterItem
         {
-            Key = RegisterKeys.AutomodTermsUpdate,
+            Key = RegisterKeys.AutomodTermsUpdate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(AutomodTermsUpdateEvent),
             SubscriptionType = SubscriptionTypes.AutomodTermsUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
+        public static readonly RegisterItem RegAutomodSettingsUpdate = new RegisterItem()
+        {
+            Key = RegisterKeys.AutomodSettingsUpdate.ToEventString(),
+            Ver = "1",
+            SpecificObject = typeof(AutomodSettingsUpdateEvent),
+            Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId),
+            SubscriptionType = SubscriptionTypes.AutomodSettingsUpdate
+        };
+
+        public static readonly RegisterItem RegChannelBitsUse = new RegisterItem()
+        {
+            Key = RegisterKeys.ChannelBitsUse.ToEventString(),
+            Ver = "1",
+            SpecificObject = typeof(ChannelBitsUseEvent),
+            SubscriptionType = SubscriptionTypes.ChannelBitsUse,
+            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+        };
+
         public static readonly RegisterItem RegConduitShardDisabled = new RegisterItem
         {
-            Key = RegisterKeys.ConduitShardDisabled,
+            Key = RegisterKeys.ConduitShardDisabled.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ConduitShardDisabledEvent),
             SubscriptionType = SubscriptionTypes.ConduitShardDisabled,
@@ -65,7 +104,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelAdBreakBegin = new RegisterItem
         {
-            Key = RegisterKeys.ChannelAdBreakBegin,
+            Key = RegisterKeys.ChannelAdBreakBegin.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelAdBreakBeginEvent),
             SubscriptionType = SubscriptionTypes.ChannelAdBreakBegin,
@@ -74,7 +113,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelBan = new RegisterItem
         {
-            Key = RegisterKeys.ChannelBan,
+            Key = RegisterKeys.ChannelBan.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelBanEvent),
             SubscriptionType = SubscriptionTypes.ChannelBan,
@@ -83,7 +122,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelFollow = new RegisterItem
         {
-            Key = RegisterKeys.ChannelFollow,
+            Key = RegisterKeys.ChannelFollow.ToEventString(),
             Ver = "2",
             SpecificObject = typeof(ChannelFollowEvent),
             SubscriptionType = SubscriptionTypes.ChannelFollow,
@@ -92,7 +131,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelGoalBegin = new RegisterItem
         {
-            Key = RegisterKeys.ChannelGoalBegin,
+            Key = RegisterKeys.ChannelGoalBegin.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelGoalBeginEvent),
             SubscriptionType = SubscriptionTypes.ChannelGoalBegin,
@@ -101,7 +140,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelGoalEnd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelGoalEnd,
+            Key = RegisterKeys.ChannelGoalEnd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelGoalEndEvent),
             SubscriptionType = SubscriptionTypes.ChannelGoalEnd,
@@ -110,7 +149,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelGoalProgress = new RegisterItem
         {
-            Key = RegisterKeys.ChannelGoalProgress,
+            Key = RegisterKeys.ChannelGoalProgress.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelGoalProgressEvent),
             SubscriptionType = SubscriptionTypes.ChannelGoalProgress,
@@ -119,7 +158,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelGuestStarGuestUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelGuestStarGuestUpdate,
+            Key = RegisterKeys.ChannelGuestStarGuestUpdate.ToEventString(),
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarGuestUpdateEvent),
             SubscriptionType = SubscriptionTypes.BetaChannelGuestStarGuestUpdate,
@@ -128,7 +167,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelGuestStarSessionBegin = new RegisterItem
         {
-            Key = RegisterKeys.ChannelGuestStarSessionBegin,
+            Key = RegisterKeys.ChannelGuestStarSessionBegin.ToEventString(),
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarSessionBeginEvent),
             SubscriptionType = SubscriptionTypes.BetaChannelGuestStarSessionBegin,
@@ -137,7 +176,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelGuestStarSessionEnd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelGuestStarSessionEnd,
+            Key = RegisterKeys.ChannelGuestStarSessionEnd.ToEventString(),
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarSessionEndEvent),
             SubscriptionType = SubscriptionTypes.BetaChannelGuestStarSessionEnd,
@@ -146,7 +185,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelGuestStarSettingsUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelGuestStarSettingsUpdate,
+            Key = RegisterKeys.ChannelGuestStarSettingsUpdate.ToEventString(),
             Ver = "beta",
             SpecificObject = typeof(ChannelGuestStarSettingsUpdateEvent),
             SubscriptionType = SubscriptionTypes.BetaChannelGuestStarSettingsUpdate,
@@ -155,7 +194,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelHypeTrainBegin = new RegisterItem
         {
-            Key = RegisterKeys.ChannelHypeTrainBegin,
+            Key = RegisterKeys.ChannelHypeTrainBegin.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelHypeTrainBeginEvent),
             SubscriptionType = SubscriptionTypes.ChannelHypeTrainBegin,
@@ -164,7 +203,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelHypeTrainEnd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelHypeTrainEnd,
+            Key = RegisterKeys.ChannelHypeTrainEnd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelHypeTrainEndEvent),
             SubscriptionType = SubscriptionTypes.ChannelHypeTrainEnd,
@@ -173,7 +212,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelHypeTrainProgress = new RegisterItem
         {
-            Key = RegisterKeys.ChannelHypeTrainProgress,
+            Key = RegisterKeys.ChannelHypeTrainProgress.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelHypeTrainProgressEvent),
             SubscriptionType = SubscriptionTypes.ChannelHypeTrainProgress,
@@ -182,7 +221,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelCharityCampaignProgress = new RegisterItem
         {
-            Key = RegisterKeys.ChannelCharityCampaignProgress,
+            Key = RegisterKeys.ChannelCharityCampaignProgress.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelCharityCampaignProgressEvent),
             SubscriptionType = SubscriptionTypes.CharityCampaignProgress,
@@ -191,7 +230,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelCharityCampaignStart = new RegisterItem
         {
-            Key = RegisterKeys.ChannelCharityCampaignStart,
+            Key = RegisterKeys.ChannelCharityCampaignStart.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelCharityCampaignStartEvent),
             SubscriptionType = SubscriptionTypes.CharityCampaignStart,
@@ -200,7 +239,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelCharityCampaignStop = new RegisterItem
         {
-            Key = RegisterKeys.ChannelCharityCampaignStop,
+            Key = RegisterKeys.ChannelCharityCampaignStop.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelCharityCampaignStopEvent),
             SubscriptionType = SubscriptionTypes.CharityCampaignStop,
@@ -209,7 +248,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelCharityDonation = new RegisterItem
         {
-            Key = RegisterKeys.ChannelCharityDonation,
+            Key = RegisterKeys.ChannelCharityDonation.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelCharityDonationEvent),
             SubscriptionType = SubscriptionTypes.CharityDonation,
@@ -218,7 +257,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatClear = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatClear,
+            Key = RegisterKeys.ChannelChatClear.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatClearEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatClear,
@@ -227,7 +266,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatClearUserMessages = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatClearUserMessages,
+            Key = RegisterKeys.ChannelChatClearUserMessages.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatClearUserMessagesEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatClearUserMessages,
@@ -236,7 +275,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatMessage = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatMessage,
+            Key = RegisterKeys.ChannelChatMessage.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatMessageEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatMessage,
@@ -245,7 +284,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatMessageDelete = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatMessageDelete,
+            Key = RegisterKeys.ChannelChatMessageDelete.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatMessageDeleteEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatMessageDelete,
@@ -254,7 +293,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatNotification = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatNotification,
+            Key = RegisterKeys.ChannelChatNotification.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatNotificationEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatNotification,
@@ -263,7 +302,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatSettingsUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatSettingsUpdate,
+            Key = RegisterKeys.ChannelChatSettingsUpdate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatSettingsUpdateEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatSettingsUpdate,
@@ -272,7 +311,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatUserMessageHold = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatUserMessageHold,
+            Key = RegisterKeys.ChannelChatUserMessageHold.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatUserMessageHoldEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatUserMessageHold,
@@ -281,16 +320,40 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelChatUserMessageUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelChatUserMessageUpdate,
+            Key = RegisterKeys.ChannelChatUserMessageUpdate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelChatUserMessageUpdateEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatUserMessageUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
+        public static readonly RegisterItem  RegChannelSharedChatSessionBegin = new RegisterItem
+        {
+            Key = RegisterKeys.ChannelSharedChatSessionBegin.ToEventString(),
+            Ver = "1",
+            SpecificObject = typeof(ChannelSharedChatSessionBeginEvent),
+            SubscriptionType = SubscriptionTypes.ChannelSharedChatSessionBegin,
+            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+        };
+        public static readonly RegisterItem RegChannelSharedChatSessionUpdate = new RegisterItem
+        {
+            Key = RegisterKeys.ChannelSharedChatSessionUpdate.ToEventString(),
+            Ver = "1",
+            SpecificObject = typeof(ChannelSharedChatSessionUpdateEvent),
+            SubscriptionType = SubscriptionTypes.ChannelSharedChatSessionUpdate,
+            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+        };
+        public static readonly RegisterItem RegChannelSharedChatSessionEnd = new RegisterItem
+        {
+            Key = RegisterKeys.ChannelSharedChatSessionEnd.ToEventString(),
+            Ver = "1",
+            SpecificObject = typeof(ChannelSharedChatSessionEndEvent),
+            SubscriptionType = SubscriptionTypes.ChannelSharedChatSessionEnd,
+            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+        };
         public static readonly RegisterItem RegChannelCheer = new RegisterItem
         {
-            Key = RegisterKeys.ChannelCheer,
+            Key = RegisterKeys.ChannelCheer.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelCheerEvent),
             SubscriptionType = SubscriptionTypes.ChannelCheer,
@@ -299,7 +362,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelModeratorAdd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelModeratorAdd,
+            Key = RegisterKeys.ChannelModeratorAdd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelModeratorAddEvent),
             SubscriptionType = SubscriptionTypes.ChannelModeratorAdd,
@@ -308,7 +371,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelModeratorRemove = new RegisterItem
         {
-            Key = RegisterKeys.ChannelModeratorRemove,
+            Key = RegisterKeys.ChannelModeratorRemove.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelModeratorRemoveEvent),
             SubscriptionType = SubscriptionTypes.ChannelModeratorRemove,
@@ -317,16 +380,25 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPointsAutomaticRewardRedemptionAdd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPointsAutomaticRewardRedemptionAdd,
+            Key = RegisterKeys.ChannelPointsAutomaticRewardRedemptionAdd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPointsAutomaticRewardRedemptionAddEvent),
             SubscriptionType = SubscriptionTypes.ChannelPointsAutomaticRewardRedemptionAdd,
             Conditions = CondList(ConditionTypes.BroadcasterUserId)
         };
+        
+        public static readonly RegisterItem RegChannelPointsAutomaticRewardRedemptionAddV2 = new RegisterItem
+        {
+            Key = RegisterKeys.ChannelPointsAutomaticRewardRedemptionAddV2.ToEventString(),
+            Ver = "2",
+            SpecificObject = typeof(ChannelPointsAutomaticRewardRedemptionAddV2Event),
+            SubscriptionType = SubscriptionTypes.ChannelPointsAutomaticRewardRedemptionAddV2,
+            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+        };
 
         public static readonly RegisterItem RegChannelPointsCustomRewardAdd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPointsCustomRewardAdd,
+            Key = RegisterKeys.ChannelPointsCustomRewardAdd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardAddEvent),
             SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardAdd,
@@ -335,7 +407,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPointsCustomRewardRedemptionAdd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPointsCustomRewardRedemptionAdd,
+            Key = RegisterKeys.ChannelPointsCustomRewardRedemptionAdd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardRedemptionAddEvent),
             SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardRedemptionAdd,
@@ -344,7 +416,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPointsCustomRewardRedemptionUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPointsCustomRewardRedemptionUpdate,
+            Key = RegisterKeys.ChannelPointsCustomRewardRedemptionUpdate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardRedemptionUpdateEvent),
             SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardRedemptionUpdate,
@@ -353,7 +425,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPointsCustomRewardRemove = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPointsCustomRewardRemove,
+            Key = RegisterKeys.ChannelPointsCustomRewardRemove.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardRemoveEvent),
             SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardRemove,
@@ -362,7 +434,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPointsCustomRewardUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPointsCustomRewardUpdate,
+            Key = RegisterKeys.ChannelPointsCustomRewardUpdate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPointsCustomRewardUpdateEvent),
             SubscriptionType = SubscriptionTypes.ChannelPointsCustomRewardUpdate,
@@ -371,7 +443,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPollBegin = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPollBegin,
+            Key = RegisterKeys.ChannelPollBegin.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPollBeginEvent),
             SubscriptionType = SubscriptionTypes.ChannelPollBegin,
@@ -380,7 +452,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPollEnd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPollEnd,
+            Key = RegisterKeys.ChannelPollEnd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPollEndEvent),
             SubscriptionType = SubscriptionTypes.ChannelPollEnd,
@@ -389,7 +461,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPollProgress = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPollProgress,
+            Key = RegisterKeys.ChannelPollProgress.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPollProgressEvent),
             SubscriptionType = SubscriptionTypes.ChannelPollProgress,
@@ -398,7 +470,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPredictionBegin = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPredictionBegin,
+            Key = RegisterKeys.ChannelPredictionBegin.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionBeginEvent),
             SubscriptionType = SubscriptionTypes.ChannelPredictionBegin,
@@ -407,7 +479,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPredictionEnd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPredictionEnd,
+            Key = RegisterKeys.ChannelPredictionEnd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionEndEvent),
             SubscriptionType = SubscriptionTypes.ChannelPredictionEnd,
@@ -416,7 +488,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPredictionLock = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPredictionLock,
+            Key = RegisterKeys.ChannelPredictionLock.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionLockEvent),
             SubscriptionType = SubscriptionTypes.ChannelPredictionLock,
@@ -425,7 +497,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelPredictionProgress = new RegisterItem
         {
-            Key = RegisterKeys.ChannelPredictionProgress,
+            Key = RegisterKeys.ChannelPredictionProgress.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelPredictionProgressEvent),
             SubscriptionType = SubscriptionTypes.ChannelPredictionProgress,
@@ -434,7 +506,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelRaid = new RegisterItem
         {
-            Key = RegisterKeys.ChannelRaid,
+            Key = RegisterKeys.ChannelRaid.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelRaidEvent),
             SubscriptionType = SubscriptionTypes.ChannelRaid,
@@ -443,7 +515,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelShieldModeBegin = new RegisterItem
         {
-            Key = RegisterKeys.ChannelShieldModeBegin,
+            Key = RegisterKeys.ChannelShieldModeBegin.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelShieldModeBeginEvent),
             SubscriptionType = SubscriptionTypes.ChannelShieldModeBegin,
@@ -452,7 +524,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelShieldModeEnd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelShieldModeEnd,
+            Key = RegisterKeys.ChannelShieldModeEnd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelShieldModeEndEvent),
             SubscriptionType = SubscriptionTypes.ChannelShieldModeEnd,
@@ -461,7 +533,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelShoutoutCreate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelShoutoutCreate,
+            Key = RegisterKeys.ChannelShoutoutCreate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelShoutoutCreateEvent),
             SubscriptionType = SubscriptionTypes.ChannelShoutoutCreate,
@@ -470,7 +542,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelShoutoutReceived = new RegisterItem
         {
-            Key = RegisterKeys.ChannelShoutoutReceived,
+            Key = RegisterKeys.ChannelShoutoutReceived.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelShoutoutReceivedEvent),
             SubscriptionType = SubscriptionTypes.ChannelShoutoutReceived,
@@ -479,7 +551,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelSubscribe = new RegisterItem
         {
-            Key = RegisterKeys.ChannelSubscribe,
+            Key = RegisterKeys.ChannelSubscribe.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelSubscribeEvent),
             SubscriptionType = SubscriptionTypes.ChannelSubscribe,
@@ -488,7 +560,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelSubscriptionEnd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelSubscriptionEnd,
+            Key = RegisterKeys.ChannelSubscriptionEnd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelSubscriptionEndEvent),
             SubscriptionType = SubscriptionTypes.ChannelSubscriptionEnd,
@@ -497,7 +569,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelSubscriptionGift = new RegisterItem
         {
-            Key = RegisterKeys.ChannelSubscriptionGift,
+            Key = RegisterKeys.ChannelSubscriptionGift.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelSubscriptionGiftEvent),
             SubscriptionType = SubscriptionTypes.ChannelSubscriptionGift,
@@ -506,7 +578,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelSubscriptionMessage = new RegisterItem
         {
-            Key = RegisterKeys.ChannelSubscriptionMessage,
+            Key = RegisterKeys.ChannelSubscriptionMessage.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelSubscriptionMessageEvent),
             SubscriptionType = SubscriptionTypes.ChannelSubscriptionMessage,
@@ -515,7 +587,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelUnban = new RegisterItem
         {
-            Key = RegisterKeys.ChannelUnban,
+            Key = RegisterKeys.ChannelUnban.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelUnbanEvent),
             SubscriptionType = SubscriptionTypes.ChannelUnban,
@@ -524,7 +596,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelUnbanRequestCreate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelUnbanRequestCreate,
+            Key = RegisterKeys.ChannelUnbanRequestCreate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelUnbanRequestCreateEvent),
             SubscriptionType = SubscriptionTypes.ChannelUnbanCreate,
@@ -533,7 +605,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelUnbanRequestResolve = new RegisterItem
         {
-            Key = RegisterKeys.ChannelUnbanRequestResolve,
+            Key = RegisterKeys.ChannelUnbanRequestResolve.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelUnbanRequestResolveEvent),
             SubscriptionType = SubscriptionTypes.ChannelUnbanResolve,
@@ -542,7 +614,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelUpdate,
+            Key = RegisterKeys.ChannelUpdate.ToEventString(),
             Ver = "2",
             SpecificObject = typeof(ChannelUpdateEvent),
             SubscriptionType = SubscriptionTypes.ChannelUpdate,
@@ -551,7 +623,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelVIPAdd = new RegisterItem
         {
-            Key = RegisterKeys.ChannelVIPAdd,
+            Key = RegisterKeys.ChannelVIPAdd.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelVIPAddEvent),
             SubscriptionType = SubscriptionTypes.ChannelVIPAdd,
@@ -560,7 +632,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelVIPRemove = new RegisterItem
         {
-            Key = RegisterKeys.ChannelVIPRemove,
+            Key = RegisterKeys.ChannelVIPRemove.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelVIPRemoveEvent),
             SubscriptionType = SubscriptionTypes.ChannelVIPRemove,
@@ -569,7 +641,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelWarningAcknowledge = new RegisterItem
         {
-            Key = RegisterKeys.ChannelWarningAcknowledge,
+            Key = RegisterKeys.ChannelWarningAcknowledge.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelWarningAcknowledgeEvent),
             SubscriptionType = SubscriptionTypes.ChannelWarningAcknowledge,
@@ -578,7 +650,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelWarningSend = new RegisterItem
         {
-            Key = RegisterKeys.ChannelWarningSend,
+            Key = RegisterKeys.ChannelWarningSend.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelWarningSendEvent),
             SubscriptionType = SubscriptionTypes.ChannelWarningSend,
@@ -587,7 +659,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegStreamOffline = new RegisterItem
         {
-            Key = RegisterKeys.StreamOffline,
+            Key = RegisterKeys.StreamOffline.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(StreamOfflineEvent),
             SubscriptionType = SubscriptionTypes.StreamOffline,
@@ -596,7 +668,7 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegStreamOnline = new RegisterItem
         {
-            Key = RegisterKeys.StreamOnline,
+            Key = RegisterKeys.StreamOnline.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(StreamOnlineEvent),
             SubscriptionType = SubscriptionTypes.StreamOnline,
@@ -605,133 +677,91 @@ namespace Twitch.EventSub.SubsRegister
 
         public static readonly RegisterItem RegChannelSuspiciousUserMessage = new RegisterItem
         {
-            Key = RegisterKeys.ChannelSuspiciousUserMessage,
+            Key = RegisterKeys.ChannelSuspiciousUserMessage.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelSuspiciousUserMessageEvent),
             SubscriptionType = SubscriptionTypes.SuspiciousUserMessage,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
+        public static readonly RegisterItem RegUserUpdate = new RegisterItem()
+        {
+            Key = RegisterKeys.UserUpdate.ToEventString(),
+            Ver = "1",
+            SpecificObject = typeof(UserUpdateEvent),
+            SubscriptionType = SubscriptionTypes.UserUpdate,
+            Conditions = CondList(ConditionTypes.ClientId)
+        };
+
         public static readonly RegisterItem RegChannelSuspiciousUserUpdate = new RegisterItem
         {
-            Key = RegisterKeys.ChannelSuspiciousUserUpdate,
+            Key = RegisterKeys.ChannelSuspiciousUserUpdate.ToEventString(),
             Ver = "1",
             SpecificObject = typeof(ChannelSuspiciousUserUpdateEvent),
             SubscriptionType = SubscriptionTypes.SuspiciousUserUpdate,
             Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.ModeratorUserId)
         };
 
-        public static readonly List<RegisterItem> RegisterList = GetRegisterList();
-
-        public static readonly Dictionary<string, RegisterItem> RegisterDictionary = GetRegisterDictionary();
-
-        public static List<RegisterItem> GetRegisterList()
+        public static readonly RegisterItem RegUserWhisperReceived = new RegisterItem()
         {
-            var registryKeysList = RegisterKeys.KeysList;
-            var registryItems = new List<RegisterItem>();
+            Key = RegisterKeys.UserWhisperReceived.ToEventString(),
+            Ver = "1",
+            SpecificObject = typeof(UserWhisperReceivedEvent),
+            SubscriptionType = SubscriptionTypes.UserWhisperReceived,
+            Conditions = CondList(ConditionTypes.UserId)
+        };
+        
+        // AUTO-GENERATED COLLECTIONS - Initialized ONCE in static constructor
+        
+        /// <summary>
+        /// Dictionary keyed by RegisterKeyVersion (event + version) - populated once during static initialization
+        /// Perfect for routing with version specificity
+        /// </summary>
+        public static readonly Dictionary<RegisterKeyVersion, RegisterItem> RegisterDictionaryByVersion;
 
-            foreach (var key in registryKeysList)
+        /// <summary>
+        /// Static constructor - runs ONCE when the class is first accessed
+        /// All reflection happens here and never again
+        /// </summary>
+        static Register()
+        {
+            // Get all RegisterItems once via reflection
+            var allItems = GetAllRegisterItems();
+            RegisterDictionaryByVersion = new Dictionary<RegisterKeyVersion, RegisterItem>();
+            
+            foreach (var item in allItems)
             {
-                var item = GetRegistryItem(key);
-                if (item != null)
+                // Populate RegisterDictionary and RegisterDictionaryByVersion
+                if (RegisterKeysExtensions.TryFromEventString(item.Key, out var registerKey))
                 {
-                    registryItems.Add(item);
+                    // For RegisterDictionaryByVersion, use composite key
+                    var keyVersion = new RegisterKeyVersion(registerKey.ToEventString(), item.Ver);
+                    RegisterDictionaryByVersion[keyVersion] = item;
                 }
             }
-
-            return registryItems;
         }
 
-        public static Dictionary<string, RegisterItem> GetRegisterDictionary()
+        /// <summary>
+        /// Gets all RegisterItem static fields using reflection
+        /// Called ONLY ONCE during static initialization
+        /// </summary>
+        private static List<RegisterItem> GetAllRegisterItems()
         {
-            var registryKeysList = RegisterKeys.KeysList;
-            var registryItems = new Dictionary<string, RegisterItem>();
-
-            foreach (string key in registryKeysList)
+            var items = new List<RegisterItem>();
+            var type = typeof(Register);
+            
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(f => f.FieldType == typeof(RegisterItem) && f.Name.StartsWith("Reg"));
+            
+            foreach (var field in fields)
             {
-                var item = GetRegistryItem(key);
-                if (item != null)
+                if (field.GetValue(null) is RegisterItem item)
                 {
-                    registryItems.Add(key, item);
+                    items.Add(item);
                 }
             }
-
-            return registryItems;
-        }
-
-        // Retrieves the RegistryItem based on the event key
-        public static RegisterItem GetRegistryItem(string key)
-        {
-            return key switch
-            {
-                RegisterKeys.AutomodMessageHold => RegAutomodMessageHold,
-                RegisterKeys.AutomodMessageUpdate => RegAutomodMessageUpdate,
-                RegisterKeys.AutomodTermsUpdate => RegAutomodTermsUpdate,
-                RegisterKeys.ConduitShardDisabled => RegConduitShardDisabled,
-                RegisterKeys.ChannelAdBreakBegin => RegChannelAdBreakBegin,
-                RegisterKeys.ChannelBan => RegChannelBan,
-                RegisterKeys.ChannelFollow => RegChannelFollow,
-                RegisterKeys.ChannelGoalBegin => RegChannelGoalBegin,
-                RegisterKeys.ChannelGoalEnd => RegChannelGoalEnd,
-                RegisterKeys.ChannelGoalProgress => RegChannelGoalProgress,
-                RegisterKeys.ChannelGuestStarGuestUpdate => RegChannelGuestStarGuestUpdate,
-                RegisterKeys.ChannelGuestStarSessionBegin => RegChannelGuestStarSessionBegin,
-                RegisterKeys.ChannelGuestStarSessionEnd => RegChannelGuestStarSessionEnd,
-                RegisterKeys.ChannelGuestStarSettingsUpdate => RegChannelGuestStarSettingsUpdate,
-                RegisterKeys.ChannelHypeTrainBegin => RegChannelHypeTrainBegin,
-                RegisterKeys.ChannelHypeTrainEnd => RegChannelHypeTrainEnd,
-                RegisterKeys.ChannelHypeTrainProgress => RegChannelHypeTrainProgress,
-                RegisterKeys.ChannelCharityCampaignProgress => RegChannelCharityCampaignProgress,
-                RegisterKeys.ChannelCharityCampaignStart => RegChannelCharityCampaignStart,
-                RegisterKeys.ChannelCharityCampaignStop => RegChannelCharityCampaignStop,
-                RegisterKeys.ChannelCharityDonation => RegChannelCharityDonation,
-                RegisterKeys.ChannelChatClear => RegChannelChatClear,
-                RegisterKeys.ChannelChatClearUserMessages => RegChannelChatClearUserMessages,
-                RegisterKeys.ChannelChatMessage => RegChannelChatMessage,
-                RegisterKeys.ChannelChatMessageDelete => RegChannelChatMessageDelete,
-                RegisterKeys.ChannelChatNotification => RegChannelChatNotification,
-                RegisterKeys.ChannelChatSettingsUpdate => RegChannelChatSettingsUpdate,
-                RegisterKeys.ChannelChatUserMessageHold => RegChannelChatUserMessageHold,
-                RegisterKeys.ChannelChatUserMessageUpdate => RegChannelChatUserMessageUpdate,
-                RegisterKeys.ChannelCheer => RegChannelCheer,
-                RegisterKeys.ChannelModeratorAdd => RegChannelModeratorAdd,
-                RegisterKeys.ChannelModeratorRemove => RegChannelModeratorRemove,
-                RegisterKeys.ChannelPointsAutomaticRewardRedemptionAdd => RegChannelPointsAutomaticRewardRedemptionAdd,
-                RegisterKeys.ChannelPointsCustomRewardAdd => RegChannelPointsCustomRewardAdd,
-                RegisterKeys.ChannelPointsCustomRewardRedemptionAdd => RegChannelPointsCustomRewardRedemptionAdd,
-                RegisterKeys.ChannelPointsCustomRewardRedemptionUpdate => RegChannelPointsCustomRewardRedemptionUpdate,
-                RegisterKeys.ChannelPointsCustomRewardRemove => RegChannelPointsCustomRewardRemove,
-                RegisterKeys.ChannelPointsCustomRewardUpdate => RegChannelPointsCustomRewardUpdate,
-                RegisterKeys.ChannelPollBegin => RegChannelPollBegin,
-                RegisterKeys.ChannelPollEnd => RegChannelPollEnd,
-                RegisterKeys.ChannelPollProgress => RegChannelPollProgress,
-                RegisterKeys.ChannelPredictionBegin => RegChannelPredictionBegin,
-                RegisterKeys.ChannelPredictionEnd => RegChannelPredictionEnd,
-                RegisterKeys.ChannelPredictionLock => RegChannelPredictionLock,
-                RegisterKeys.ChannelPredictionProgress => RegChannelPredictionProgress,
-                RegisterKeys.ChannelRaid => RegChannelRaid,
-                RegisterKeys.ChannelShieldModeBegin => RegChannelShieldModeBegin,
-                RegisterKeys.ChannelShieldModeEnd => RegChannelShieldModeEnd,
-                RegisterKeys.ChannelShoutoutCreate => RegChannelShoutoutCreate,
-                RegisterKeys.ChannelShoutoutReceived => RegChannelShoutoutReceived,
-                RegisterKeys.ChannelSubscribe => RegChannelSubscribe,
-                RegisterKeys.ChannelSubscriptionEnd => RegChannelSubscriptionEnd,
-                RegisterKeys.ChannelSubscriptionGift => RegChannelSubscriptionGift,
-                RegisterKeys.ChannelSubscriptionMessage => RegChannelSubscriptionMessage,
-                RegisterKeys.ChannelSuspiciousUserMessage => RegChannelSuspiciousUserMessage,
-                RegisterKeys.ChannelSuspiciousUserUpdate => RegChannelSuspiciousUserUpdate,
-                RegisterKeys.ChannelUnban => RegChannelUnban,
-                RegisterKeys.ChannelUnbanRequestCreate => RegChannelUnbanRequestCreate,
-                RegisterKeys.ChannelUnbanRequestResolve => RegChannelUnbanRequestResolve,
-                RegisterKeys.ChannelUpdate => RegChannelUpdate,
-                RegisterKeys.ChannelVIPAdd => RegChannelVIPAdd,
-                RegisterKeys.ChannelVIPRemove => RegChannelVIPRemove,
-                RegisterKeys.ChannelWarningAcknowledge => RegChannelWarningAcknowledge,
-                RegisterKeys.ChannelWarningSend => RegChannelWarningSend,
-                RegisterKeys.StreamOffline => RegStreamOffline,
-                RegisterKeys.StreamOnline => RegStreamOnline,
-                _ => throw new ArgumentException($"RegistryItem for key '{key}' not found."),
-            };
+            
+            return items;
         }
 
         private static List<ConditionTypes> CondList(params ConditionTypes[] types)
