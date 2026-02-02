@@ -13,6 +13,7 @@ using Twitch.EventSub.Messages.ReconnectMessage;
 using Twitch.EventSub.Messages.RevocationMessage;
 using Twitch.EventSub.Messages.WelcomeMessage;
 using Websocket.Client;
+using Websocket.Client.Exceptions;
 
 namespace Twitch.EventSub.User
 {
@@ -345,7 +346,7 @@ namespace Twitch.EventSub.User
                 _logger.LogInformation("[EventSubClient] - [UserSequencer] Watchdog triggered Reconnect. Socket disconnected.");
                 return;
             }
-            _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Socket Disconnected from outside", disconnectInfo);
+            _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Socket Disconnected from outside - Probably stream ended", disconnectInfo);
             await StateMachine.FireAsync(UserActions.WebsocketFail);
         }
 
@@ -712,7 +713,21 @@ namespace Twitch.EventSub.User
                 await _subscriptionManager.ClearAsync(ClientId, AccessToken, UserId, _logger, cls);
             }
             _watchdog.Stop();
-            await Socket.Stop(WebSocketCloseStatus.NormalClosure, "Closing");
+            try
+            {
+                await Socket.Stop(WebSocketCloseStatus.NormalClosure, "Closing");
+            }
+            catch(WebsocketException ex)
+            {
+                if (ex.Message.Contains("disposed"))
+                {
+                    //NOOP - Websocket is already disposing and its ok. 
+                }
+                else
+                {
+                    _logger.LogWarningDetails(ex, ex.Message);
+                }
+            }
             await StateMachine.FireAsync(UserActions.Dispose);
         }
 

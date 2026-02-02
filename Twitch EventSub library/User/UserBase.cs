@@ -188,6 +188,7 @@ namespace Twitch.EventSub.User
                 .OnEntryAsync(NewAccessTokenRequestAsync)
                 .Permit(UserActions.NewTokenProvidedReturnToInitialTest, UserState.InitialAccessTest)
                 .Permit(UserActions.AwaitNewTokenFailed, UserState.Stoping)
+                .Permit(UserActions.AccessFailed, UserState.Stoping)
                 .Permit(UserActions.Stop, UserState.Stoping)
                 .Permit(UserActions.Fail, UserState.Failing)
                 .Permit(UserActions.HandShakeFail, UserState.Failing)
@@ -210,7 +211,11 @@ namespace Twitch.EventSub.User
                 .Permit(UserActions.WebsocketFail, UserState.Failing);
             machine.Configure(UserState.Reconnecting)
                 .Permit(UserActions.ReconnectSuccess, UserState.Running)
-                .Permit(UserActions.ReconnectFail, UserState.Failing);
+                .Permit(UserActions.ReconnectFail, UserState.Failing)
+                .Permit(UserActions.Stop, UserState.Stoping)
+                .Permit(UserActions.Fail, UserState.Failing)
+                .Permit(UserActions.HandShakeFail, UserState.Failing)
+                .Permit(UserActions.WebsocketFail, UserState.Failing);
             machine.Configure(UserState.ReconnectingFromWatchdog)
                 .OnEntryAsync(ReconnectingAfterWatchdogFailAsync)
                 .Permit(UserActions.AccessTesting, UserState.InitialAccessTest);
