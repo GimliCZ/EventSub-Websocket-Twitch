@@ -7,18 +7,27 @@ using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.API.Providers;
 using Twitch.EventSub.APIConduit.Models.Requests;
+using Twitch.EventSub.CoreFunctions;
 using Twitch.EventSub.APIConduit.Models.Responses;
 using Twitch.EventSub.APIConduit.Models.Shared;
 
 namespace Twitch.EventSub.APIConduit
 {
-    public static class TwitchApiConduit
+    public class TwitchApiConduit
     {
         private const string ConduitUrl = "https://api.twitch.tv/helix/eventsub/conduits";
         private const string ConduitShardsUrl = "https://api.twitch.tv/helix/eventsub/conduits/shards";
-        public static async Task<ConduitCreateResponse> ConduitCreatorAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, int inicialSize = 1)
+
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public TwitchApiConduit(IHttpClientFactory httpClientFactory)
         {
-            using (var httpClient = new HttpClient())
+            _httpClientFactory = httpClientFactory;
+        }
+
+        public async Task<ConduitCreateResponse> ConduitCreatorAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, int inicialSize = 1)
+        {
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
@@ -53,9 +62,9 @@ namespace Twitch.EventSub.APIConduit
             }
         }
 
-        public static async Task<ConduitUpdateResponse> ConduitUpdateAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId, int size)
+        public async Task<ConduitUpdateResponse> ConduitUpdateAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId, int size)
         {
-            using (var httpClient = new HttpClient())
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
@@ -87,9 +96,9 @@ namespace Twitch.EventSub.APIConduit
                 }
             }
         }
-        public static async Task<bool> ConduitDeleteAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId)
+        public async Task<bool> ConduitDeleteAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId)
         {
-            using (var httpClient = new HttpClient())
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
@@ -120,9 +129,9 @@ namespace Twitch.EventSub.APIConduit
                 }
             }
         }
-        public static async Task<ConduitGetShardsResponse> ConduitGetShardsAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId, SubscriptionStatusTypes status = SubscriptionStatusTypes.Empty, string after = null)
+        public async Task<ConduitGetShardsResponse> ConduitGetShardsAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId, SubscriptionStatusTypes status = SubscriptionStatusTypes.Empty, string after = null)
         {
-            using (var httpClient = new HttpClient())
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
@@ -161,7 +170,7 @@ namespace Twitch.EventSub.APIConduit
                 }
             }
         }
-        public static async Task<List<ConduitShard>> GetAllConduitGetShardsAsync(string clientId, string accessToken, string conduitId, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector = SubscriptionStatusTypes.Enabled)
+        public async Task<List<ConduitShard>> GetAllConduitGetShardsAsync(string clientId, string accessToken, string conduitId, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector = SubscriptionStatusTypes.Enabled)
         {
             var allSubscriptions = new List<ConduitShard>();
             string? afterCursor = null;

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using Twitch.EventSub.API;
 using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.CoreFunctions;
 using Twitch.EventSub.Interfaces;
@@ -16,18 +18,21 @@ namespace Twitch.EventSub
         private readonly string _clientId;
         private readonly ConcurrentDictionary<string, EventProvider> _eventDictionary;
         private readonly ILogger _logger;
+        private readonly TwitchApi _twitchApi;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventSubClient"/> class.
         /// </summary>
-        /// <param name="clientId">The client ID.</param>
+        /// <param name="options">Configuration options containing the client ID.</param>
         /// <param name="logger">The logger instance.</param>
-        public EventSubClient(string clientId, ILogger<EventSubClient> logger)
+        /// <param name="twitchApi">The TwitchApi singleton instance.</param>
+        public EventSubClient(IOptions<EventSubClientOptions> options, ILogger<EventSubClient> logger, TwitchApi twitchApi)
         {
-            _clientId = clientId;
+            _clientId = options.Value.ClientId;
             _eventDictionary = new ConcurrentDictionary<string, EventProvider>();
             _logger = logger;
-            _logger.LogDebug("EventSubClient instantiated with clientId: {ClientId}", clientId);
+            _twitchApi = twitchApi;
+            _logger.LogDebug("EventSubClient instantiated with clientId: {ClientId}", _clientId);
         }
 
         /// <summary>
@@ -73,7 +78,7 @@ namespace Twitch.EventSub
                 return false;
             }
 
-            var eventProvider = new EventProvider(userId, accessToken, listOfSubs, _clientId, _logger, allowRecovery);
+            var eventProvider = new EventProvider(userId, accessToken, listOfSubs, _clientId, _logger, allowRecovery, _twitchApi);
             _logger.LogDebug("Attempting to add user");
             return _eventDictionary.TryAdd(userId, eventProvider);
         }

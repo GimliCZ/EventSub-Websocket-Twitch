@@ -10,11 +10,18 @@ using Twitch.EventSub.CoreFunctions;
 
 namespace Twitch.EventSub.API
 {
-    public static class TwitchApi
+    public class TwitchApi
     {
         private const string BaseUrl = "https://api.twitch.tv/helix/eventsub/subscriptions";
 
         private const string ValidateUrl = "https://id.twitch.tv/oauth2/validate";
+
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public TwitchApi(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
 
         /// <summary>
         /// Function sends filled CreateSubscriptionRequest to twitch for processing
@@ -27,9 +34,9 @@ namespace Twitch.EventSub.API
         /// <returns>True on success, false on failure</returns>
         /// <exception cref="InvalidAccessTokenException"></exception>
         /// <exception cref="Exception">This state means that accessToken is not set up properly for given request</exception>
-        public static async Task<bool> SubscribeAsync(string? clientId, string? accessToken, CreateSubscriptionRequest request, CancellationTokenSource clSource, ILogger logger, string? url = null)
+        public async Task<bool> SubscribeAsync(string? clientId, string? accessToken, CreateSubscriptionRequest request, CancellationTokenSource clSource, ILogger logger, string? url = null)
         {
-            using (var httpClient = new HttpClient())
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
@@ -69,9 +76,9 @@ namespace Twitch.EventSub.API
         /// <param name="subscriptionId"></param>
         /// <returns>True on success, false on failure</returns>
         /// <exception cref="InvalidAccessTokenException"></exception>
-        public static async Task<bool> UnSubscribeAsync(string? clientId, string? accessToken, string subscriptionId, CancellationTokenSource clSource, ILogger logger, string? url = null)
+        public async Task<bool> UnSubscribeAsync(string? clientId, string? accessToken, string subscriptionId, CancellationTokenSource clSource, ILogger logger, string? url = null)
         {
-            using (var httpClient = new HttpClient())
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
@@ -107,11 +114,11 @@ namespace Twitch.EventSub.API
         /// <param name="after"></param>
         /// <returns cref="GetSubscriptionsResponse"> Provides segment of subscriptions, content MAY BE NULL</returns>
         /// <exception cref="InvalidAccessTokenException"></exception>
-        private static async Task<GetSubscriptionsResponse?> GetSubscriptionsAsync(string? clientId, string? accessToken, SubscriptionStatusTypes statusSelector, CancellationTokenSource clSource, ILogger logger, string? after = null, string? url = null)
+        private async Task<GetSubscriptionsResponse?> GetSubscriptionsAsync(string? clientId, string? accessToken, SubscriptionStatusTypes statusSelector, CancellationTokenSource clSource, ILogger logger, string? after = null, string? url = null)
         {
             var status = StatusProvider.GetStatusString(statusSelector);
 
-            using (var httpClient = new HttpClient())
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
@@ -158,7 +165,7 @@ namespace Twitch.EventSub.API
         /// <param name="statusSelector"></param>
         /// <returns> list of subscriptions</returns>
         /// <exception cref="InvalidAccessTokenException">May provide exception from GetSubscriptionsAsync</exception>
-        public static async Task<List<GetSubscriptionsResponse>> GetAllSubscriptionsAsync(string? clientId, string? accessToken, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector = SubscriptionStatusTypes.Enabled, string? url = null)
+        public async Task<List<GetSubscriptionsResponse>> GetAllSubscriptionsAsync(string? clientId, string? accessToken, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector = SubscriptionStatusTypes.Enabled, string? url = null)
         {
             var allSubscriptions = new List<GetSubscriptionsResponse>();
             string? afterCursor = null;
@@ -203,9 +210,9 @@ namespace Twitch.EventSub.API
         /// <param name="logger">ILogger for logging.</param>
         /// <returns>True if the token is valid, false if not.</returns>
         /// <exception cref="InvalidAccessTokenException"></exception>
-        public static async Task<bool> ValidateTokenAsync(string? accessToken, CancellationTokenSource clSource, ILogger logger, string? url = null)
+        public async Task<bool> ValidateTokenAsync(string? accessToken, CancellationTokenSource clSource, ILogger logger, string? url = null)
         {
-            using (var httpClient = new HttpClient())
+            var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", accessToken);
                 try
