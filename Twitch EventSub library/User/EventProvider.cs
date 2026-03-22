@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Twitch.EventSub.API;
 using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Extensions;
 using Twitch.EventSub.API.Models;
@@ -45,6 +46,7 @@ namespace Twitch.EventSub.User
         private UserSequencer _userSequencer;
         private readonly Timer _recoveryTimer;
         private readonly bool _allowRecovery;
+        private readonly TwitchApi _twitchApi;
         private string? _testingApiUrl;
         private string? _testingWebsocketUrl;
 
@@ -54,7 +56,8 @@ namespace Twitch.EventSub.User
             List<SubscriptionTypes> listOfSubs,
             string clientId,
             ILogger logger,
-            bool allowRecovery)
+            bool allowRecovery,
+            TwitchApi twitchApi)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(userId, nameof(userId));
             ArgumentException.ThrowIfNullOrWhiteSpace(accessToken, nameof(accessToken));
@@ -68,6 +71,7 @@ namespace Twitch.EventSub.User
             _logger = logger;
             _recoveryTimer = new(_ => OnRecoveryTimerEnlapsedAsync(), null, Timeout.Infinite, Timeout.Infinite);
             _allowRecovery = allowRecovery;
+            _twitchApi = twitchApi;
             Create();
         }
 
@@ -121,7 +125,7 @@ namespace Twitch.EventSub.User
                     Condition = new Condition()
                 }.SetSubscriptionType(type, _userId));
             }
-            _userSequencer = new UserSequencer(_userId, _accessToken, listOfRequests, _clientId, _logger, testApiUrl, testWebsocketUrl);
+            _userSequencer = new UserSequencer(_userId, _accessToken, listOfRequests, _clientId, _logger, _twitchApi, testApiUrl, testWebsocketUrl);
 
             _userSequencer.AccessTokenRequestedEvent += AccessTokenRequestedEventAsync;
             _userSequencer.OnRawMessageRecievedAsync += OnRawMessageReceivedAsync;

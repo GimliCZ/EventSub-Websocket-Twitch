@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
+using Twitch.EventSub.API;
 using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Reactive.Linq;
@@ -50,13 +51,13 @@ namespace Twitch.EventSub.User
         /// <param name="requestedSubscriptions">List of requested subscriptions.</param>
         /// <param name="clientId">Client ID.</param>
         /// <param name="logger">Logger instance.</param>
-        public UserSequencer(string id, string access, List<CreateSubscriptionRequest> requestedSubscriptions, string clientId, ILogger logger, string apiTestingUrl = null, string socketTestingUrl = null) : base(id, access, requestedSubscriptions, socketTestingUrl)
+        public UserSequencer(string id, string access, List<CreateSubscriptionRequest> requestedSubscriptions, string clientId, ILogger logger, TwitchApi twitchApi, string apiTestingUrl = null, string socketTestingUrl = null) : base(id, access, requestedSubscriptions, socketTestingUrl)
         {
             _logger = logger;
             ClientId = clientId;
             _watchdog = new Watchdog(logger);
             _replayProtection = new ReplayProtection(10);
-            _subscriptionManager = new SubscriptionManager(apiTestingUrl);
+            _subscriptionManager = new SubscriptionManager(twitchApi, apiTestingUrl);
             _logger.LogDebug("[UserSequencer] Initialized with UserId: {UserId}, ClientId: {ClientId}", id, clientId);
             _managerTimer = new Timer(_ => OnManagerTimerEnlapsedAsync(), null, Timeout.Infinite, Timeout.Infinite);
             _watchdog.OnWatchdogTimeout -= OnWatchdogTimeoutAsync;
