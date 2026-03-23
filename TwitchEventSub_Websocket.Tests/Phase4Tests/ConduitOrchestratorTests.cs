@@ -12,6 +12,7 @@ public class ConduitOrchestratorTests
 {
     private static ConduitOrchestrator BuildOrchestrator(ITwitchConduitApi api)
     {
+        
         var options = Options.Create(new EventSubClientOptions
         {
             ClientId = "client-id",
