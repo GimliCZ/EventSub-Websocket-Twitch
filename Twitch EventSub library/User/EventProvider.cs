@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Twitch.EventSub.API;
 using Twitch.EventSub.API.Enums;
-using Twitch.EventSub;
 using Twitch.EventSub.API.Extensions;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.CoreFunctions;
@@ -98,9 +96,9 @@ namespace Twitch.EventSub.User
         }
 
         /// <summary>
-        /// Directly reports Connection state via shard binding session, may be used for reconnect detection
+        /// Directly reports Connection state from Socket, may be used for reconnect detection
         /// </summary>
-        public bool IsConnected => _userSequencer?.IsConnected == true;
+        public bool IsConnected => _userSequencer?.Socket?.IsRunning == true;
 
         /// <summary>
         /// Notifies about connection termination.
@@ -128,7 +126,7 @@ namespace Twitch.EventSub.User
             {
                 listOfRequests.Add(new CreateSubscriptionRequest()
                 {
-                    Transport = new Transport() { Method = nameof(TransportMethod.websocket) },
+                    Transport = new Transport() { Method = "websocket" },
                     Condition = new Condition()
                 }.SetSubscriptionType(type, _userId));
             }
@@ -212,7 +210,7 @@ namespace Twitch.EventSub.User
             {
                 listOfRequests.Add(new CreateSubscriptionRequest()
                 {
-                    Transport = new Transport() { Method = nameof(TransportMethod.websocket) },
+                    Transport = new Transport() { Method = "websocket" },
                     Condition = new Condition()
                 }.SetSubscriptionType(type, _userSequencer.UserId));
             }

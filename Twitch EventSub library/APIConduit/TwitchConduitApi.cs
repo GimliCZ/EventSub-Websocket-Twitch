@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http.Headers;
@@ -8,7 +7,6 @@ using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.API.Providers;
 using Twitch.EventSub.APIConduit.Models.Requests;
-using Twitch.EventSub.CoreFunctions;
 using Twitch.EventSub.APIConduit.Models.Responses;
 using Twitch.EventSub.APIConduit.Models.Shared;
 
