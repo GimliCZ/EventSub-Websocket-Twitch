@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Twitch.EventSub.API;
 using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Extensions;
 using Twitch.EventSub.API.Models;
@@ -98,7 +99,7 @@ namespace Twitch.EventSub.User
         /// <summary>
         /// Directly reports Connection state from Socket, may be used for reconnect detection
         /// </summary>
-        public bool IsConnected => _userSequencer?.Socket?.IsRunning == true;
+        public bool IsConnected => _userSequencer?.IsConnected == true;
 
         /// <summary>
         /// Notifies about connection termination.

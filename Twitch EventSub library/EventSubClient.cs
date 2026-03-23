@@ -14,7 +14,7 @@ namespace Twitch.EventSub
     /// The EventSubClient class manages the interaction with the Twitch EventSub websocket service,
     /// allowing the addition, updating, deletion, and management of user event subscriptions.
     /// </summary>
-    public class EventSubClient : IEventSubClient
+    public class EventSubClient : IEventSubClient, IHostedService, IAsyncDisposable
     {
         private readonly string _clientId;
         private readonly string _appAccessToken;
