@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using Twitch.EventSub.API;
 using Twitch.EventSub.API.Enums;
+using Twitch.EventSub;
 using Twitch.EventSub.API.Extensions;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.CoreFunctions;
@@ -45,6 +47,9 @@ namespace Twitch.EventSub.User
         private UserSequencer _userSequencer;
         private readonly Timer _recoveryTimer;
         private readonly bool _allowRecovery;
+        private readonly TwitchApi _twitchApi;
+        private readonly IConduitOrchestrator _conduitOrchestrator;
+        private readonly string _appAccessToken;
         private string? _testingApiUrl;
         private string? _testingWebsocketUrl;
 
@@ -54,7 +59,10 @@ namespace Twitch.EventSub.User
             List<SubscriptionTypes> listOfSubs,
             string clientId,
             ILogger logger,
-            bool allowRecovery)
+            bool allowRecovery,
+            TwitchApi twitchApi,
+            IConduitOrchestrator conduitOrchestrator,
+            string appAccessToken)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(userId, nameof(userId));
             ArgumentException.ThrowIfNullOrWhiteSpace(accessToken, nameof(accessToken));
@@ -68,6 +76,9 @@ namespace Twitch.EventSub.User
             _logger = logger;
             _recoveryTimer = new(_ => OnRecoveryTimerEnlapsedAsync(), null, Timeout.Infinite, Timeout.Infinite);
             _allowRecovery = allowRecovery;
+            _twitchApi = twitchApi;
+            _conduitOrchestrator = conduitOrchestrator;
+            _appAccessToken = appAccessToken;
             Create();
         }
 
@@ -87,9 +98,9 @@ namespace Twitch.EventSub.User
         }
 
         /// <summary>
-        /// Directly reports Connection state from Socket, may be used for reconnect detection
+        /// Directly reports Connection state via shard binding session, may be used for reconnect detection
         /// </summary>
-        public bool IsConnected => _userSequencer?.Socket?.IsRunning == true;
+        public bool IsConnected => _userSequencer?.IsConnected == true;
 
         /// <summary>
         /// Notifies about connection termination.
@@ -117,11 +128,11 @@ namespace Twitch.EventSub.User
             {
                 listOfRequests.Add(new CreateSubscriptionRequest()
                 {
-                    Transport = new Transport() { Method = "websocket" },
+                    Transport = new Transport() { Method = nameof(TransportMethod.websocket) },
                     Condition = new Condition()
                 }.SetSubscriptionType(type, _userId));
             }
-            _userSequencer = new UserSequencer(_userId, _accessToken, listOfRequests, _clientId, _logger, testApiUrl, testWebsocketUrl);
+            _userSequencer = new UserSequencer(_userId, _accessToken, listOfRequests, _clientId, _logger, _twitchApi, _conduitOrchestrator, _appAccessToken, testApiUrl, testWebsocketUrl);
 
             _userSequencer.AccessTokenRequestedEvent += AccessTokenRequestedEventAsync;
             _userSequencer.OnRawMessageRecievedAsync += OnRawMessageReceivedAsync;
@@ -201,7 +212,7 @@ namespace Twitch.EventSub.User
             {
                 listOfRequests.Add(new CreateSubscriptionRequest()
                 {
-                    Transport = new Transport() { Method = "websocket" },
+                    Transport = new Transport() { Method = nameof(TransportMethod.websocket) },
                     Condition = new Condition()
                 }.SetSubscriptionType(type, _userSequencer.UserId));
             }

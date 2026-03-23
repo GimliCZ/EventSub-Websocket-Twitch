@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using Twitch.EventSub.API;
 using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.CoreFunctions;
 using Twitch.EventSub.Interfaces;
@@ -10,24 +13,43 @@ namespace Twitch.EventSub
     /// <summary>
     /// The EventSubClient class manages the interaction with the Twitch EventSub websocket service,
     /// allowing the addition, updating, deletion, and management of user event subscriptions.
+    /// Implements <see cref="IHostedService"/> for .NET DI hosting integration and
+    /// <see cref="IAsyncDisposable"/> for clean teardown.
     /// </summary>
-    public class EventSubClient : IEventSubClient
+    public class EventSubClient : IEventSubClient, IHostedService, IAsyncDisposable
     {
         private readonly string _clientId;
+        private readonly string _appAccessToken;
         private readonly ConcurrentDictionary<string, EventProvider> _eventDictionary;
         private readonly ILogger _logger;
+        private readonly TwitchApi _twitchApi;
+        private readonly IConduitOrchestrator _conduitOrchestrator;
+        private readonly IShardManager _shardManager;
+        private int _disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventSubClient"/> class.
         /// </summary>
-        /// <param name="clientId">The client ID.</param>
+        /// <param name="options">Configuration options containing the client ID.</param>
         /// <param name="logger">The logger instance.</param>
-        public EventSubClient(string clientId, ILogger<EventSubClient> logger)
+        /// <param name="twitchApi">The TwitchApi singleton instance.</param>
+        /// <param name="conduitOrchestrator">Manages conduit lifecycle with the Twitch API.</param>
+        /// <param name="shardManager">Manages WebSocket shard allocation for users.</param>
+        public EventSubClient(
+            IOptions<EventSubClientOptions> options,
+            ILogger<EventSubClient> logger,
+            TwitchApi twitchApi,
+            IConduitOrchestrator conduitOrchestrator,
+            IShardManager shardManager)
         {
-            _clientId = clientId;
+            _clientId = options.Value.ClientId;
+            _appAccessToken = options.Value.AppAccessToken;
             _eventDictionary = new ConcurrentDictionary<string, EventProvider>();
             _logger = logger;
-            _logger.LogDebug("EventSubClient instantiated with clientId: {ClientId}", clientId);
+            _twitchApi = twitchApi;
+            _conduitOrchestrator = conduitOrchestrator;
+            _shardManager = shardManager;
+            _logger.LogDebug("EventSubClient instantiated with clientId: {ClientId}", _clientId);
         }
 
         /// <summary>
@@ -73,7 +95,7 @@ namespace Twitch.EventSub
                 return false;
             }
 
-            var eventProvider = new EventProvider(userId, accessToken, listOfSubs, _clientId, _logger, allowRecovery);
+            var eventProvider = new EventProvider(userId, accessToken, listOfSubs, _clientId, _logger, allowRecovery, _twitchApi, _conduitOrchestrator, _appAccessToken);
             _logger.LogDebug("Attempting to add user");
             return _eventDictionary.TryAdd(userId, eventProvider);
         }
@@ -195,6 +217,59 @@ namespace Twitch.EventSub
                 return false;
             }
             return provider.IsConnected;
+        }
+
+        // ── IHostedService ───────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Called by the .NET host on startup. Initializes the conduit and subscribes to shard session updates.
+        /// </summary>
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("EventSubClient starting — initializing conduit");
+            await _conduitOrchestrator.InitializeAsync(cancellationToken);
+            _shardManager.OnSessionIdUpdated += OnShardSessionIdUpdated;
+        }
+
+        /// <summary>
+        /// Called by the .NET host on shutdown. Tears down the conduit and disposes the shard manager.
+        /// </summary>
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            if (Interlocked.CompareExchange(ref _disposed, 1, 0) != 0) return;
+            _shardManager.OnSessionIdUpdated -= OnShardSessionIdUpdated;
+            _logger.LogInformation("EventSubClient stopping — tearing down conduit");
+            await _conduitOrchestrator.TeardownAsync(cancellationToken);
+            await _shardManager.DisposeAsync();
+        }
+
+        // ── IAsyncDisposable ────────────────────────────────────────────────────
+
+        /// <inheritdoc/>
+        public async ValueTask DisposeAsync()
+        {
+            await StopAsync(CancellationToken.None);
+        }
+
+        // ── Private helpers ─────────────────────────────────────────────────────
+
+        private async void OnShardSessionIdUpdated(object? sender, SessionIdUpdatedArgs args)
+        {
+            try
+            {
+                if (args.NewSessionId == null)
+                {
+                    await _conduitOrchestrator.RemoveShardAsync(args.ShardId, CancellationToken.None);
+                }
+                else if (args.OldSessionId == null)
+                    await _conduitOrchestrator.AddShardAsync(args.ShardId, args.NewSessionId, CancellationToken.None);
+                else
+                    await _conduitOrchestrator.UpdateShardAsync(args.ShardId, args.OldSessionId, args.NewSessionId, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OnShardSessionIdUpdated failed for shard {ShardId}", args.ShardId);
+            }
         }
     }
 }

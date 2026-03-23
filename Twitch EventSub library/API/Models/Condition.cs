@@ -33,5 +33,8 @@ namespace Twitch.EventSub.API.Models
 
         [JsonProperty("reward_id", NullValueHandling = NullValueHandling.Ignore)]
         public string? RewardId { get; set; }
+
+        [JsonProperty("conduit_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string? ConduitId { get; set; }
     }
 }

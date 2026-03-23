@@ -12,6 +12,7 @@
          CategoryId,
          CampaignId,
          ExtensionClientId,*/
-        ClientId
+        ClientId,
+        ConduitId
     }
 }

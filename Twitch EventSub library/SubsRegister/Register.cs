@@ -99,7 +99,7 @@ namespace Twitch.EventSub.SubsRegister
             Ver = "1",
             SpecificObject = typeof(ConduitShardDisabledEvent),
             SubscriptionType = SubscriptionTypes.ConduitShardDisabled,
-            Conditions = CondList(ConditionTypes.ClientId)
+            Conditions = CondList(ConditionTypes.ConduitId)
         };
 
         public static readonly RegisterItem RegChannelAdBreakBegin = new RegisterItem
@@ -261,7 +261,7 @@ namespace Twitch.EventSub.SubsRegister
             Ver = "1",
             SpecificObject = typeof(ChannelChatClearEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatClear,
-            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+            Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
         public static readonly RegisterItem RegChannelChatClearUserMessages = new RegisterItem
@@ -288,7 +288,7 @@ namespace Twitch.EventSub.SubsRegister
             Ver = "1",
             SpecificObject = typeof(ChannelChatMessageDeleteEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatMessageDelete,
-            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+            Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
         public static readonly RegisterItem RegChannelChatNotification = new RegisterItem
@@ -297,7 +297,7 @@ namespace Twitch.EventSub.SubsRegister
             Ver = "1",
             SpecificObject = typeof(ChannelChatNotificationEvent),
             SubscriptionType = SubscriptionTypes.ChannelChatNotification,
-            Conditions = CondList(ConditionTypes.BroadcasterUserId)
+            Conditions = CondList(ConditionTypes.BroadcasterUserId, ConditionTypes.UserId)
         };
 
         public static readonly RegisterItem RegChannelChatSettingsUpdate = new RegisterItem
@@ -690,7 +690,7 @@ namespace Twitch.EventSub.SubsRegister
             Ver = "1",
             SpecificObject = typeof(UserUpdateEvent),
             SubscriptionType = SubscriptionTypes.UserUpdate,
-            Conditions = CondList(ConditionTypes.ClientId)
+            Conditions = CondList(ConditionTypes.UserId)
         };
 
         public static readonly RegisterItem RegChannelSuspiciousUserUpdate = new RegisterItem
@@ -770,5 +770,10 @@ namespace Twitch.EventSub.SubsRegister
             list.AddRange(types);
             return list;
         }
+
+        /// <summary>
+        /// Test helper: exposes the user.update RegisterItem for assertion in unit tests.
+        /// </summary>
+        public static RegisterItem GetUserUpdateSubscription() => RegUserUpdate;
     }
 };

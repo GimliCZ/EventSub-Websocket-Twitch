@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
+using Twitch.EventSub;
+using Twitch.EventSub.API;
 using Newtonsoft.Json;
-using System.Net.WebSockets;
-using System.Reactive.Linq;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.CoreFunctions;
 using Twitch.EventSub.Messages;
@@ -12,8 +12,6 @@ using Twitch.EventSub.Messages.PingMessage;
 using Twitch.EventSub.Messages.ReconnectMessage;
 using Twitch.EventSub.Messages.RevocationMessage;
 using Twitch.EventSub.Messages.WelcomeMessage;
-using Websocket.Client;
-using Websocket.Client.Exceptions;
 
 namespace Twitch.EventSub.User
 {
@@ -31,13 +29,24 @@ namespace Twitch.EventSub.User
         private const int StopGroupUnsubscribeTolerance = 5000; //[ms]
         private const int RunGroupSubscribeTolerance = 5000; //[ms]
         private const int AccessTokenValidationTolerance = 5000; //[ms]
-        private const int WelcomeMessageDelayTolerance = 1000;//[ms]
+        private const int WelcomeMessageDelayTolerance = 10_000; // [ms] — spec requires 10 seconds from connect to Welcome
         private const int NewAccessTokenRequestDelay = 1000;//[ms]
         private const int NumberOfRetries = 3;
         private readonly AsyncAutoResetEvent _awaitMessage = new(false);
         private readonly AsyncAutoResetEvent _awaitRefresh = new(false);
         private readonly ILogger _logger;
         private readonly Timer _managerTimer;
+        private IShardBinding? _shardBinding;
+        private static readonly TimeSpan ReconnectGraceTimeout = TimeSpan.FromSeconds(30);
+        private int _keepAliveMs = 10_100; // default: 10s + 100ms tolerance, overwritten by Welcome message
+        private readonly IConduitOrchestrator _conduitOrchestrator;
+        private readonly string _appAccessToken;
+        protected override ILogger? Logger => _logger;
+
+        /// <summary>
+        /// Reports whether the shard binding is active (has a valid session ID).
+        /// </summary>
+        public bool IsConnected => !string.IsNullOrEmpty(_shardBinding?.SessionId);
         private readonly ReplayProtection _replayProtection;
         private readonly SubscriptionManager _subscriptionManager;
         private readonly Watchdog _watchdog;
@@ -50,17 +59,41 @@ namespace Twitch.EventSub.User
         /// <param name="requestedSubscriptions">List of requested subscriptions.</param>
         /// <param name="clientId">Client ID.</param>
         /// <param name="logger">Logger instance.</param>
-        public UserSequencer(string id, string access, List<CreateSubscriptionRequest> requestedSubscriptions, string clientId, ILogger logger, string apiTestingUrl = null, string socketTestingUrl = null) : base(id, access, requestedSubscriptions, socketTestingUrl)
+        public UserSequencer(string id, string access, List<CreateSubscriptionRequest> requestedSubscriptions, string clientId, ILogger logger, TwitchApi twitchApi, IConduitOrchestrator conduitOrchestrator, string appAccessToken, string apiTestingUrl = null, string socketTestingUrl = null) : base(id, access, requestedSubscriptions)
         {
             _logger = logger;
             ClientId = clientId;
+            _conduitOrchestrator = conduitOrchestrator;
+            _appAccessToken = appAccessToken;
             _watchdog = new Watchdog(logger);
             _replayProtection = new ReplayProtection(10);
-            _subscriptionManager = new SubscriptionManager(apiTestingUrl);
+            _subscriptionManager = new SubscriptionManager(twitchApi, apiTestingUrl);
             _logger.LogDebug("[UserSequencer] Initialized with UserId: {UserId}, ClientId: {ClientId}", id, clientId);
             _managerTimer = new Timer(_ => OnManagerTimerEnlapsedAsync(), null, Timeout.Infinite, Timeout.Infinite);
             _watchdog.OnWatchdogTimeout -= OnWatchdogTimeoutAsync;
             _watchdog.OnWatchdogTimeout += OnWatchdogTimeoutAsync;
+        }
+
+        public void SetShardBinding(IShardBinding binding)
+        {
+            _shardBinding = binding;
+            _shardBinding.OnShardLost += async (_, _) =>
+            {
+                if (StateMachine.CanFire(UserActions.WebsocketFail))
+                {
+                    await StateMachine.FireAsync(UserActions.WebsocketFail);
+                }
+            };
+            _shardBinding.OnSessionIdChanged += (_, newId) =>
+            {
+                SessionId = newId;
+            };
+            // Subscribe to message stream — process all messages routed to this user
+            _shardBinding.UserMessages.Subscribe(async msg =>
+            {
+                try { await ProcessWebSocketMessageAsync(msg); }
+                catch (Exception ex) { _logger.LogError(ex, "[UserSequencer] Error processing message for {UserId}", UserId); }
+            });
         }
 
         public event CoreFunctions.AsyncEventHandler<string?> OnRawMessageRecievedAsync;
@@ -125,8 +158,8 @@ namespace Twitch.EventSub.User
                     UserId,
                     RequestedSubscriptions,
                     ClientId,
-                    AccessToken,
-                    SessionId,
+                    _appAccessToken,
+                    _conduitOrchestrator.ConduitId,
                     cts,
                     _logger
                     );
@@ -227,7 +260,7 @@ namespace Twitch.EventSub.User
             }
             catch (Exception ex)
             {
-                _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Welcome message didn't come in time. Exception message: " + ex.Message, ex, Socket, DateTime.Now);
+                _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Welcome message didn't come in time. Exception message: " + ex.Message, ex, DateTime.Now);
                 await StateMachine.FireAsync(UserActions.WelcomeMessageFail);
             }
         }
@@ -246,8 +279,8 @@ namespace Twitch.EventSub.User
                     UserId,
                     RequestedSubscriptions,
                     ClientId,
-                    AccessToken,
-                    SessionId,
+                    _appAccessToken,
+                    _conduitOrchestrator.ConduitId,
                     ManagerCancelationSource,
                     _logger
                     );
@@ -293,77 +326,57 @@ namespace Twitch.EventSub.User
         }
 
         /// <summary>
-        /// Runs the WebSocket connection.
+        /// Awaits a new session ID from the shard binding after a reconnect.
         /// </summary>
-        protected override async Task RunWebsocketAsync()
+        protected override async Task ReconnectingEntryAsync()
         {
-            _logger.LogDebug("[RunWebsocketAsync] Running WebSocket for UserId: {UserId}", UserId);
-            if (Socket.IsRunning)
+            if (_shardBinding == null) { await StateMachine.FireAsync(UserActions.ReconnectFail); return; }
+
+            var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            EventHandler<string>? handler = null;
+            handler = (_, newSessionId) =>
             {
-                _logger.LogInformation("[EventSubClient] - [UserSequencer] Socket already active");
-                return;
+                _shardBinding.OnSessionIdChanged -= handler;  // always unsubscribe
+                tcs.TrySetResult(newSessionId);
+            };
+            _shardBinding.OnSessionIdChanged += handler;
+
+            using var cts = new CancellationTokenSource(ReconnectGraceTimeout);
+            cts.Token.Register(() =>
+            {
+                _shardBinding.OnSessionIdChanged -= handler;  // unsubscribe on timeout too
+                tcs.TrySetCanceled();
+            });
+
+            try
+            {
+                var newSession = await tcs.Task;
+                SessionId = newSession;
+                await StateMachine.FireAsync(UserActions.ReconnectSuccess);
             }
-            Socket = new WebsocketClient(Url);
-            Socket.MessageReceived.Select(msg => Observable.FromAsync(() => SocketOnMessageReceivedAsync(this, msg.Text))).Concat().Subscribe();
-            Socket.DisconnectionHappened.Select(disconnectInfo => Observable.FromAsync(() => OnServerSideTerminationAsync(this, disconnectInfo))).Concat().Subscribe();
-            await Socket.Start();
-            await RunWebsocketNextActionAsync();
+            catch
+            {
+                await StateMachine.FireAsync(UserActions.ReconnectFail);
+            }
         }
 
-        private async Task RunWebsocketNextActionAsync()
+        /// <summary>
+        /// Awaits the shard (WebSocket) to become ready via IShardBinding.
+        /// </summary>
+        protected override async Task AwaitShardReadyAsync()
         {
-            if (Socket.IsRunning)
+            if (_shardBinding?.SessionId is { Length: > 0 })
             {
-                _logger.LogDebug("[RunWebsocketAsync] WebSocket started successfully for UserId: {UserId}", UserId);
+                SessionId = _shardBinding.SessionId;
                 await StateMachine.FireAsync(UserActions.WebsocketSuccess);
             }
             else
             {
-                _logger.LogDebug("[RunWebsocketAsync] WebSocket failed to start for UserId: {UserId}", UserId);
+                _logger.LogWarning("[UserSequencer] AwaitShardReadyAsync: no binding or empty session for {UserId}", UserId);
                 await StateMachine.FireAsync(UserActions.WebsocketFail);
             }
         }
 
-        /// <summary>
-        /// Tests for intended or unintended disconnect
-        /// Handles server-side termination events.
-        /// </summary>
-        /// <param name="userSequencer">Event sender.</param>
-        /// <param name="disconnectInfo">Disconnection information.</param>
-        /// <returns></returns>
-        private async Task OnServerSideTerminationAsync(UserSequencer userSequencer, DisconnectionInfo disconnectInfo)
-        {
-            _watchdog.Stop();
-
-            if (disconnectInfo.Type == DisconnectionType.ByUser)
-            {
-                _logger.LogInformation("[EventSubClient] - [UserSequencer] Socket correctly disconnected");
-                return;
-            }
-            //this is case, when we transition to watchdog reconnect and twitch servers request disconnect at same time.
-            if (StateMachine.IsInState(UserState.ReconnectingFromWatchdog))
-            {
-                _logger.LogInformation("[EventSubClient] - [UserSequencer] Watchdog triggered Reconnect. Socket disconnected.");
-                return;
-            }
-            _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Socket Disconnected from outside - Probably stream ended", disconnectInfo);
-            await StateMachine.FireAsync(UserActions.WebsocketFail);
-        }
-
-        /// <summary>
-        /// Handles message processing
-        /// </summary>
-        /// <param name="userSequencer">Event sender.</param>
-        /// <param name="text">Message</param>
-        /// <returns></returns>
-        private async Task SocketOnMessageReceivedAsync(UserSequencer userSequencer, string? text)
-        {
-            _logger.LogDebug("[SocketOnMessageReceivedAsync] Message received: {Text}", text);
-            if (!string.IsNullOrEmpty(text))
-            {
-                await ParseWebSocketMessageAsync(text);
-            }
-        }
 
         private async Task<Task> ParseWebSocketMessageAsync(string e)
         {
@@ -407,6 +420,28 @@ namespace Twitch.EventSub.User
                 _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Unexpected error while processing WebSocket message: ", ex);
                 return Task.CompletedTask;
             }
+        }
+
+        private Task ProcessWebSocketMessageAsync(WebSocketMessage message)
+        {
+            if (message?.Metadata == null) return Task.CompletedTask;
+            if (_replayProtection.IsDuplicate(message.Metadata.MessageId) ||
+                !_replayProtection.IsUpToDate(message.Metadata.MessageTimestamp))
+            {
+                _logger.LogDebug("[UserSequencer] Duplicate or outdated message: {MessageId}", message.Metadata.MessageId);
+                return Task.CompletedTask;
+            }
+
+            return message switch
+            {
+                WebSocketWelcomeMessage welcomeMessage => WelcomeMessageProcessingAsync(welcomeMessage),
+                WebSocketKeepAliveMessage => KeepAliveMessageProcessingAsync(),
+                WebSocketPingMessage => PingMessageProcessingAsync(),
+                WebSocketNotificationMessage notificationMessage => NotificationMessageProcessingAsync(notificationMessage),
+                WebSocketReconnectMessage reconnectMessage => ReconnectMessageProcessingAsync(reconnectMessage),
+                WebSocketRevocationMessage revocationMessage => RevocationMessageProcessingAsync(revocationMessage),
+                _ => Task.CompletedTask
+            };
         }
 
         /// <summary>
@@ -530,9 +565,9 @@ namespace Twitch.EventSub.User
             // keep alive in sec + 10% tolerance
             if (message?.Payload?.Session.KeepAliveTimeoutSeconds != null)
             {
-                var _keepAlive = (message.Payload.Session.KeepAliveTimeoutSeconds.Value * 1000 + 100);
+                _keepAliveMs = (message.Payload.Session.KeepAliveTimeoutSeconds.Value * 1000 + 100);
                 _awaitMessage.Set();
-                _watchdog.Start(_keepAlive);
+                _watchdog.Start(_keepAliveMs);
                 _logger.LogDebugDetails("[EventSubClient] - [UserSequencer] Welcome message proccesed", message, DateTime.Now);
             }
             else
@@ -570,54 +605,17 @@ namespace Twitch.EventSub.User
             }
             else if (StateMachine.State == UserState.ReconnectingFromWatchdog)
             {
-                //This is a fix for twitch triggering watchdog before sending reconnect message.
                 return;
             }
 
             _watchdog.Stop();
 
-            if (message?.Payload?.Session.ReconnectUrl != null)
-            {
-                if (Uri.TryCreate(message.Payload.Session.ReconnectUrl, new UriCreationOptions() { DangerousDisablePathAndQueryCanonicalization = false }, out var Url))
-                {
-                    Socket.Url = Url;
-                    await Socket.ReconnectOrFail();
-                    Socket.MessageReceived.Select(msg => Observable.FromAsync(() => SocketOnMessageReceivedAsync(this, msg.Text))).Concat().Subscribe();
-                    Socket.DisconnectionHappened.Select(disconnectInfo => Observable.FromAsync(() => OnServerSideTerminationAsync(this, disconnectInfo))).Concat().Subscribe();
-                    if (!Socket.IsRunning)
-                    {
-                        _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] connection lost during reconnect", message, Socket);
-                        await StateMachine.FireAsync(UserActions.ReconnectFail);
-                        return;
-                    }
-                }
-                else
-                {
-                    _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Didn't recieve valid Url during Reconnect", message, Socket);
-                    await StateMachine.FireAsync(UserActions.ReconnectFail);
-                    return;
-                }
-            }
-            if (message.Payload.Session.KeepAliveTimeoutSeconds.HasValue)
-            {
-                _watchdog.Start(message.Payload.Session.KeepAliveTimeoutSeconds.Value);
-            }
-            else
-            {
-                _watchdog.Start(30);
-                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Reconnect keep alive value not provided, trying to insert 30s", message, Socket);
-            }
+            // Reconnect message always has keepalive_timeout_seconds: null per spec.
+            // Reuse the value negotiated during the Welcome message.
+            _watchdog.Start(_keepAliveMs);
 
-            if (!string.IsNullOrEmpty(message?.Payload?.Session.Id))
-            {
-                SessionId = message.Payload.Session.Id;
-            }
-            else
-            {
-                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Provided invalid session. Terminiting", message, Socket);
-                await StateMachine.FireAsync(UserActions.ReconnectFail);
-            }
-            await StateMachine.FireAsync(UserActions.ReconnectSuccess);
+            // Session ID will be updated via IShardBinding.OnSessionIdChanged when shard completes reconnect
+            // No socket operations needed here — ShardSequencer handles the WebSocket reconnect
         }
 
         /// <summary>
@@ -650,13 +648,11 @@ namespace Twitch.EventSub.User
         }
 
         /// <summary>
-        /// Ping response
+        /// Ping response — protocol-level ping/pong is handled automatically by Websocket.Client.
         /// </summary>
-        /// <returns></returns>
         private Task PingMessageProcessingAsync()
         {
             _logger.LogDebug("[PingMessageProcessingAsync] Ping message detected");
-            Socket.Send("Pong");
             return Task.CompletedTask;
         }
 
@@ -692,15 +688,13 @@ namespace Twitch.EventSub.User
             }
             //This is case when we are not in valid state for watchdog reconnection, for example handshake and etc.
             //Eventually this case will be scares, but for now it will need recovery
-            await Socket.Stop(WebSocketCloseStatus.NormalClosure, "Server didn't respond in time");
-            _logger.LogWarningDetails("[EventSubClient] - [UserSequencer] Server didn't respond in time and program was not in state of safe reconnect recovery", sender, e, DateTime.Now);
+            _logger.LogWarning("[UserSequencer] Watchdog fallback for {UserId} — no valid state for reconnect recovery", UserId);
             if (OnOutsideDisconnectAsync != null)
             {
                 await OnOutsideDisconnectAsync.TryInvoke(this, e);
             }
             _watchdog.Stop();
             _watchdog.OnWatchdogTimeout -= OnWatchdogTimeoutAsync;
-            Socket.Dispose();
             await StateMachine.FireAsync(UserActions.Fail);
         }
 
@@ -713,21 +707,6 @@ namespace Twitch.EventSub.User
                 await _subscriptionManager.ClearAsync(ClientId, AccessToken, UserId, _logger, cls);
             }
             _watchdog.Stop();
-            try
-            {
-                await Socket.Stop(WebSocketCloseStatus.NormalClosure, "Closing");
-            }
-            catch(WebsocketException ex)
-            {
-                if (ex.Message.Contains("disposed"))
-                {
-                    //NOOP - Websocket is already disposing and its ok. 
-                }
-                else
-                {
-                    _logger.LogWarningDetails(ex, ex.Message);
-                }
-            }
             await StateMachine.FireAsync(UserActions.Dispose);
         }
 
@@ -736,26 +715,16 @@ namespace Twitch.EventSub.User
             _logger.LogDebug("[FailProcedureAsync] Failing procedure for UserId: {UserId}", UserId);
             await StopManagerAsync();
             _watchdog.Stop();
-            if (Socket.IsRunning)
-            {
-                await Socket.Stop(WebSocketCloseStatus.NormalClosure, "Closing");
-            }
             await StateMachine.FireAsync(UserActions.Dispose);
         }
 
         protected override async Task ReconnectingAfterWatchdogFailAsync()
         {
-            await StopManagerAsync();
-            using (var cls = new CancellationTokenSource(StopGroupUnsubscribeTolerance))
+            _logger.LogWarning("[UserSequencer] Watchdog triggered for {UserId} — signalling shard lost", UserId);
+            if (StateMachine.CanFire(UserActions.AccessTesting))
             {
-                await _subscriptionManager.ClearAsync(ClientId, AccessToken, UserId, _logger, cls);
+                await StateMachine.FireAsync(UserActions.AccessTesting);
             }
-            await Socket.Stop(WebSocketCloseStatus.NormalClosure, "Server didn't respond in time");
-            _logger.LogDebugDetails("[EventSubClient] - [UserSequencer] Server didn't respond in time", DateTime.Now);
-            _watchdog.Stop();
-            Socket.Dispose();
-            //Reinicialize state machine
-            await StateMachine.FireAsync(UserActions.AccessTesting);
         }
 
         protected override void UnhandeledState(UserState state, UserActions actions)

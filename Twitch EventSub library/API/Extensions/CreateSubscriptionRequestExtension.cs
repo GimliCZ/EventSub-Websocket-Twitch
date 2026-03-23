@@ -67,6 +67,10 @@ namespace Twitch.EventSub.API.Extensions
                             request.Condition.RewardId = rewardId;
                             break;
 
+                        case ConditionTypes.ConduitId:
+                            request.Condition.ConduitId = userId;
+                            break;
+
                         default:
                             throw new ArgumentException("Invalid subscription type");
                     }

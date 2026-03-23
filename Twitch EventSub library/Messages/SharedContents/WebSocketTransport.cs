@@ -7,13 +7,16 @@ namespace Twitch.EventSub.Messages.SharedContents
         [JsonProperty("method")]
         public string Method { get; set; }
 
-        [JsonProperty("session_id")]
-        public string SessionId { get; set; }
+        [JsonProperty("session_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string? SessionId { get; set; }
 
-        [JsonProperty("connected_at")]
-        public DateTime connectedAt { get; set; }
+        [JsonProperty("conduit_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string? ConduitId { get; set; }
 
-        [JsonProperty("disconnected_at")]
-        public DateTime DisconnectedAt { get; set; }
+        [JsonProperty("connected_at", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTime? ConnectedAt { get; set; }
+
+        [JsonProperty("disconnected_at", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTime? DisconnectedAt { get; set; }
     }
 }

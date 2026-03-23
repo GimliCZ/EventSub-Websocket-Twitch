@@ -1,58 +1,69 @@
-﻿using System.Globalization;
+using System.Collections.Concurrent;
+using System.Globalization;
 
-namespace Twitch.EventSub.CoreFunctions
+namespace Twitch.EventSub.CoreFunctions;
+
+/// <summary>
+/// Thread-safe replay protection. Shared singleton across all shards.
+/// Tracks the last N message IDs atomically to detect duplicates from
+/// parallel shard delivery. Timestamp validation follows Twitch spec: reject
+/// messages older than 10 minutes.
+/// </summary>
+public class ReplayProtection
 {
-    /// <summary>
-    /// This class is derived from Twitch documentation.
-    /// </summary>
-    public class ReplayProtection
+    private static readonly string _format = "MM/dd/yyyy HH:mm:ss";
+    private readonly int _maxSize;
+    // Key = messageId, Value = insertion-order counter for eviction
+    private readonly ConcurrentDictionary<string, long> _seen = new();
+    private long _counter;
+    private readonly object _evictionLock = new();
+
+    public ReplayProtection(int messagesToRemember)
     {
-        private static readonly string format = "MM/dd/yyyy HH:mm:ss";
-        private readonly int _memoryMaxSize;
-        private readonly Queue<string>? _rememberedMessages; //better performance for small sizes
+        _maxSize = messagesToRemember;
+    }
 
-        public ReplayProtection(int messagesToRemember)
+    /// <summary>
+    /// Returns true if this message ID has been seen before (duplicate).
+    /// Thread-safe: concurrent calls with the same ID return true for all but the first.
+    /// </summary>
+    public bool IsDuplicate(string messageId)
+    {
+        // Evict oldest entries BEFORE adding so that a previously-evicted ID
+        // is no longer in the dictionary when TryAdd is called.
+        if (_seen.Count >= _maxSize)
         {
-            _memoryMaxSize = messagesToRemember;
-            _rememberedMessages = new Queue<string>();
+            lock (_evictionLock)
+            {
+                while (_seen.Count >= _maxSize)
+                {
+                    var oldest = _seen.OrderBy(kv => kv.Value).First();
+                    _seen.TryRemove(oldest.Key, out _);
+                }
+            }
         }
 
-        public bool IsDuplicate(string data)
-        {
-            if (_rememberedMessages?.Contains(data) == true)
-            {
-                return true;
-            }
+        // TryAdd returns true only for the first caller with this key — atomic.
+        long order = Interlocked.Increment(ref _counter);
+        if (!_seen.TryAdd(messageId, order))
+            return true;
 
-            if (_rememberedMessages?.Count >= _memoryMaxSize)
-            {
-                _rememberedMessages.Dequeue();
-            }
-            _rememberedMessages?.Enqueue(data);
-            return false;
-        }
+        return false;
+    }
 
-        public bool IsUpToDate(string data)
-        {
-            var now = DateTime.UtcNow;
-            var messageTime = ParseDateTimeString(data);
-            return (now - messageTime) < TimeSpan.FromMinutes(10);
-        }
+    /// <summary>Returns true if the timestamp is within the last 10 minutes (Twitch spec).</summary>
+    public bool IsUpToDate(string timestamp)
+    {
+        var messageTime = ParseDateTimeString(timestamp);
+        return (DateTime.UtcNow - messageTime) < TimeSpan.FromMinutes(10);
+    }
 
-        public static DateTime ParseDateTimeString(string timestamp)
-        {
-            //ConvertToRfc3339WithNanoseconds
-            if (DateTime.TryParse(timestamp, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dateTime))
-            {
-                return dateTime.ToUniversalTime();
-            }
-            //alternative
-            //example: string dateString = "08/17/2023 20:33:14";
-            if (DateTime.TryParseExact(timestamp, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result))
-            {
-                return result.ToUniversalTime();
-            }
-            throw new Exception("[EventSubClient] - [ReplayProtection] Parsed Invalid date");
-        }
+    public static DateTime ParseDateTimeString(string timestamp)
+    {
+        if (DateTime.TryParse(timestamp, null, DateTimeStyles.RoundtripKind, out var dt))
+            return dt.ToUniversalTime();
+        if (DateTime.TryParseExact(timestamp, _format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt2))
+            return dt2.ToUniversalTime();
+        throw new Exception("[EventSubClient] - [ReplayProtection] Parsed Invalid date");
     }
 }

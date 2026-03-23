@@ -1,5 +1,5 @@
-﻿using Twitch.EventSub.API.Models;
-using Websocket.Client;
+using Microsoft.Extensions.Logging;
+using Twitch.EventSub.API.Models;
 
 namespace Twitch.EventSub.User
 {
@@ -58,12 +58,9 @@ namespace Twitch.EventSub.User
 
         public List<CreateSubscriptionRequest> RequestedSubscriptions;
 
-        public UserBase(string id, string access, List<CreateSubscriptionRequest> requestedSubscriptions, string url = null)
+        public UserBase(string id, string access, List<CreateSubscriptionRequest> requestedSubscriptions)
         {
             State = UserState.Registred;
-            Url = new Uri(url ?? DefaultWebSocketUrl);
-            Socket = new WebsocketClient(Url);
-            Socket.IsReconnectionEnabled = false;
             UserId = id;
             AccessToken = access;
             StateMachine = new Stateless.StateMachine<UserState, UserActions>(() => State, s => State = s);
@@ -74,9 +71,7 @@ namespace Twitch.EventSub.User
             //Console.WriteLine(graph);
         }
 
-        public Uri Url { get; set; }
         public UserState State { get; set; }
-        public WebsocketClient Socket { get; set; }
         public string UserId { get; protected set; }
         public string SessionId { get; set; }
         public string Conduit { get; set; }
@@ -90,6 +85,8 @@ namespace Twitch.EventSub.User
         public RefreshRequestArgs? LastAccessViolationArgs { get; set; }
 
         internal event EventHandler<string?> OnDispose;
+
+        protected virtual ILogger? Logger => null;
 
         public bool IsDisposed()
         {
@@ -146,7 +143,7 @@ namespace Twitch.EventSub.User
                 .Permit(UserActions.AccessFailed, UserState.AwaitNewTokenAfterFailedTest);
             //Try to establish connection, if succeeds, try to complete handshake, else, fail
             machine.Configure(UserState.Websocket)
-                .OnEntryAsync(RunWebsocketAsync)
+                .OnEntryAsync(AwaitShardReadyAsync)
                 .Permit(UserActions.WebsocketSuccess, UserState.WellcomeMessage)
                 .Permit(UserActions.WebsocketFail, UserState.Failing);
             machine.Configure(UserState.WellcomeMessage).
@@ -210,6 +207,7 @@ namespace Twitch.EventSub.User
                 .Permit(UserActions.HandShakeFail, UserState.Failing)
                 .Permit(UserActions.WebsocketFail, UserState.Failing);
             machine.Configure(UserState.Reconnecting)
+                .OnEntryAsync(ReconnectingEntryAsync)
                 .Permit(UserActions.ReconnectSuccess, UserState.Running)
                 .Permit(UserActions.ReconnectFail, UserState.Failing)
                 .Permit(UserActions.Stop, UserState.Stoping)
@@ -232,6 +230,10 @@ namespace Twitch.EventSub.User
                 .OnEntryAsync(DisposeProcedureAsync)
                 .Ignore(UserActions.RunningProceed);
             machine.OnUnhandledTrigger(UnhandeledState);
+            machine.OnTransitioned(t =>
+                Logger?.LogInformation(
+                    "User {UserId} transition: {Source} → {Dest} trigger={Trigger}",
+                    UserId, t.Source, t.Destination, t.Trigger));
         }
 
         protected abstract void UnhandeledState(UserState state, UserActions actions);
@@ -244,7 +246,6 @@ namespace Twitch.EventSub.User
 
         private async Task DisposeProcedureAsync()
         {
-            Socket.Dispose();
             await ManagerCancelationSource.CancelAsync();
             await StateMachine.DeactivateAsync();
             OnDispose?.Invoke(this, UserId);
@@ -262,6 +263,8 @@ namespace Twitch.EventSub.User
 
         protected abstract Task RunHandshakeAsync();
 
-        protected abstract Task RunWebsocketAsync();
+        protected abstract Task AwaitShardReadyAsync();
+
+        protected abstract Task ReconnectingEntryAsync();
     }
 }
