@@ -228,7 +228,7 @@ namespace Twitch.EventSub.User
             }
             catch (Exception ex)
             {
-                _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Welcome message didn't come in time. Exception message: " + ex.Message, ex, Socket, DateTime.Now);
+                _logger.LogErrorDetails("[EventSubClient] - [UserSequencer] Welcome message didn't come in time. Exception message: " + ex.Message, ex, DateTime.Now);
                 await StateMachine.FireAsync(UserActions.WelcomeMessageFail);
             }
         }
@@ -587,14 +587,14 @@ namespace Twitch.EventSub.User
                     Socket.DisconnectionHappened.Select(disconnectInfo => Observable.FromAsync(() => OnServerSideTerminationAsync(this, disconnectInfo))).Concat().Subscribe();
                     if (!Socket.IsRunning)
                     {
-                        _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] connection lost during reconnect", message, Socket);
+                        _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] connection lost during reconnect", message);
                         await StateMachine.FireAsync(UserActions.ReconnectFail);
                         return;
                     }
                 }
                 else
                 {
-                    _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Didn't recieve valid Url during Reconnect", message, Socket);
+                    _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Didn't recieve valid Url during Reconnect", message);
                     await StateMachine.FireAsync(UserActions.ReconnectFail);
                     return;
                 }
@@ -606,7 +606,7 @@ namespace Twitch.EventSub.User
             else
             {
                 _watchdog.Start(30);
-                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Reconnect keep alive value not provided, trying to insert 30s", message, Socket);
+                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Reconnect keep alive value not provided, trying to insert 30s", message);
             }
 
             if (!string.IsNullOrEmpty(message?.Payload?.Session.Id))
@@ -615,7 +615,7 @@ namespace Twitch.EventSub.User
             }
             else
             {
-                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Provided invalid session. Terminiting", message, Socket);
+                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Provided invalid session. Terminiting", message);
                 await StateMachine.FireAsync(UserActions.ReconnectFail);
             }
             await StateMachine.FireAsync(UserActions.ReconnectSuccess);
