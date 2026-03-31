@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Twitch.EventSub.API;
 using Twitch.EventSub.APIConduit;
@@ -26,13 +25,32 @@ namespace Twitch.EventSub
         }
 
         /// <summary>
+        /// Registers all TwitchEventSub services, with access to the <see cref="IServiceProvider"/>
+        /// during options configuration — use this overload to read <c>IConfiguration</c>,
+        /// environment variables, or any other DI-registered service when setting
+        /// <see cref="EventSubClientOptions.ClientId"/>.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="configure">Action receiving the <see cref="IServiceProvider"/> and <see cref="EventSubClientOptions"/>.</param>
+        public static IServiceCollection AddTwitchEventSub(
+            this IServiceCollection services,
+            Action<IServiceProvider, EventSubClientOptions> configure)
+        {
+            services.AddOptions<EventSubClientOptions>()
+                    .Configure<IServiceProvider>((options, sp) => configure(sp, options));
+            services.AddTwitchEventSubHttpClients();
+            services.AddTwitchEventSubClient();
+            return services;
+        }
+
+        /// <summary>
         /// Registers the named HttpClients with standard resilience pipelines and enrichment,
         /// and API singletons required by TwitchEventSub.
         /// Named clients: <see cref="HttpClientNames.TwitchApi"/> and <see cref="HttpClientNames.TwitchApiConduit"/>.
         /// Use this when you want to configure the HttpClients yourself before calling
         /// <see cref="AddTwitchEventSubClient"/>.
         /// </summary>
-        public static IServiceCollection AddTwitchEventSubHttpClients(this IServiceCollection services)
+        private static IServiceCollection AddTwitchEventSubHttpClients(this IServiceCollection services)
         {
             services.AddResilienceEnricher();
 
@@ -75,7 +93,7 @@ namespace Twitch.EventSub
         /// Requires <see cref="EventSubClientOptions"/> to be configured via
         /// <c>services.Configure&lt;EventSubClientOptions&gt;(...)</c> before calling this.
         /// </summary>
-        public static IServiceCollection AddTwitchEventSubClient(this IServiceCollection services)
+        private static IServiceCollection AddTwitchEventSubClient(this IServiceCollection services)
         {
             if (!services.Any(d => d.ServiceType == typeof(ILoggerFactory)))
             {
