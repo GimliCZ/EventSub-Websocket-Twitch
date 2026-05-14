@@ -66,7 +66,7 @@ services.AddTwitchEventSub(options => options.ClientId = "your-client-id");
 
 ## Setup (v3)
 
-### Quick start — single line DI registration
+### Quick start — inline ClientId
 
 ```csharp
 // Program.cs / Startup.cs
@@ -77,39 +77,23 @@ services.AddTwitchEventSub(options =>
 ```
 
 This registers:
-- Two named `HttpClient` instances (`EventSubWebsocketTwitchApi`, `EventSubWebsocketTwitchApiConduit`) with standard resilience pipelines (retry, circuit breaker, timeout) and telemetry enrichment
+- Two named `HttpClient` instances with standard resilience pipelines (retry, circuit breaker, timeout) and telemetry enrichment
 - `TwitchApi` and `TwitchApiConduit` as singletons
 - `IEventSubClient` as a singleton
 - Logging if not already registered
 
-### Advanced — custom HttpClient configuration
+### Reading ClientId from configuration / environment variables
 
-Use this when you need to configure the HTTP clients yourself (custom timeouts, proxy, etc.) before registering the client.
+Use the `IServiceProvider` overload to resolve `IConfiguration` or any other DI service when configuring options:
 
 ```csharp
-services.Configure<EventSubClientOptions>(o => o.ClientId = "your-client-id");
-
-services.AddHttpClient(HttpClientNames.TwitchApi, client =>
+services.AddTwitchEventSub((sp, options) =>
 {
-    client.Timeout = TimeSpan.FromSeconds(60);
-})
-.AddStandardResilienceHandler(options =>
-{
-    options.Retry.MaxRetryAttempts = 5;
+    var config = sp.GetRequiredService<IConfiguration>();
+    options.ClientId = config["Twitch:ClientId"]
+                       ?? Environment.GetEnvironmentVariable("TWITCH_CLIENT_ID")
+                       ?? throw new InvalidOperationException("Twitch ClientId is not configured.");
 });
-
-services.AddHttpClient(HttpClientNames.TwitchApiConduit);
-
-services.AddSingleton<TwitchApi>();
-services.AddSingleton<TwitchApiConduit>();
-services.AddTwitchEventSubClient();
-```
-
-The named client name constants are available on `HttpClientNames`:
-
-```csharp
-HttpClientNames.TwitchApi          // "EventSubWebsocketTwitchApi"
-HttpClientNames.TwitchApiConduit   // "EventSubWebsocketTwitchApiConduit"
 ```
 
 ---

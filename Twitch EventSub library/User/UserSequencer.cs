@@ -610,12 +610,57 @@ namespace Twitch.EventSub.User
 
             _watchdog.Stop();
 
+<<<<<<< HEAD
             // Reconnect message always has keepalive_timeout_seconds: null per spec.
             // Reuse the value negotiated during the Welcome message.
             _watchdog.Start(_keepAliveMs);
 
             // Session ID will be updated via IShardBinding.OnSessionIdChanged when shard completes reconnect
             // No socket operations needed here — ShardSequencer handles the WebSocket reconnect
+=======
+            if (message?.Payload?.Session.ReconnectUrl != null)
+            {
+                if (Uri.TryCreate(message.Payload.Session.ReconnectUrl, new UriCreationOptions() { DangerousDisablePathAndQueryCanonicalization = false }, out var Url))
+                {
+                    Socket.Url = Url;
+                    await Socket.ReconnectOrFail();
+                    Socket.MessageReceived.Select(msg => Observable.FromAsync(() => SocketOnMessageReceivedAsync(this, msg.Text))).Concat().Subscribe();
+                    Socket.DisconnectionHappened.Select(disconnectInfo => Observable.FromAsync(() => OnServerSideTerminationAsync(this, disconnectInfo))).Concat().Subscribe();
+                    if (!Socket.IsRunning)
+                    {
+                        _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] connection lost during reconnect", message);
+                        await StateMachine.FireAsync(UserActions.ReconnectFail);
+                        return;
+                    }
+                }
+                else
+                {
+                    _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Didn't recieve valid Url during Reconnect", message);
+                    await StateMachine.FireAsync(UserActions.ReconnectFail);
+                    return;
+                }
+            }
+            if (message.Payload.Session.KeepAliveTimeoutSeconds.HasValue)
+            {
+                _watchdog.Start(message.Payload.Session.KeepAliveTimeoutSeconds.Value);
+            }
+            else
+            {
+                _watchdog.Start(30);
+                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Reconnect keep alive value not provided, trying to insert 30s", message);
+            }
+
+            if (!string.IsNullOrEmpty(message?.Payload?.Session.Id))
+            {
+                SessionId = message.Payload.Session.Id;
+            }
+            else
+            {
+                _logger.LogInformationDetails("[EventSubClient] - [UserSequencer] Provided invalid session. Terminiting", message);
+                await StateMachine.FireAsync(UserActions.ReconnectFail);
+            }
+            await StateMachine.FireAsync(UserActions.ReconnectSuccess);
+>>>>>>> master
         }
 
         /// <summary>
