@@ -99,7 +99,7 @@ namespace Twitch.EventSub.SubsRegister
             Ver = "1",
             SpecificObject = typeof(ConduitShardDisabledEvent),
             SubscriptionType = SubscriptionTypes.ConduitShardDisabled,
-            Conditions = CondList(ConditionTypes.ConduitId)
+            Conditions = CondList(ConditionTypes.ClientId, ConditionTypes.ConduitId)
         };
 
         public static readonly RegisterItem RegChannelAdBreakBegin = new RegisterItem

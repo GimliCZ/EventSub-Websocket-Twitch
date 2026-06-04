@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Live harness scratch output (this session)
+harness_run.out
+harness_run.err
+build_errors.txt

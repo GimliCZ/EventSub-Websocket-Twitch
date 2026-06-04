@@ -29,146 +29,142 @@ namespace Twitch.EventSub.APIConduit
         public async Task<ConduitCreateResponse> ConduitCreatorAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, int inicialSize = 1)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
+            var conduitCreate = new ConduitCreateRequest { ShardCount = inicialSize };
+            var request = new HttpRequestMessage(HttpMethod.Post, ConduitUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Headers.Add("Client-Id", clientId);
+            request.Content = new StringContent(JsonConvert.SerializeObject(conduitCreate), Encoding.UTF8, "application/json");
+
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
-                var conduitCreate = new ConduitCreateRequest { ShardCount = inicialSize };
-                HttpContent content = new StringContent(JsonConvert.SerializeObject(conduitCreate), Encoding.UTF8, "application/json");
-
-                try
+                var queryBuilder = new StringBuilder(ConduitUrl);
+                var response = await httpClient.SendAsync(request, clSource.Token);
+                var body = await response.Content.ReadAsStringAsync(clSource.Token);
+                if (string.IsNullOrWhiteSpace(body))
                 {
-                    var queryBuilder = new StringBuilder(ConduitUrl);
-                    var response = await httpClient.PostAsync(ConduitUrl, content, clSource.Token);
-                    var body = await response.Content.ReadAsStringAsync(clSource.Token);
-                    if (string.IsNullOrWhiteSpace(body))
-                    {
-                        body = string.Empty;
-                    }
+                    body = string.Empty;
+                }
 
-                    switch (response.StatusCode)
-                    {
-                        case HttpStatusCode.OK: return JsonConvert.DeserializeObject<ConduitCreateResponse>(body);
-                        case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitCreator failed due" + body + response.ReasonPhrase);
-                        case HttpStatusCode.TooManyRequests: throw new InvalidOperationException("Conduit returned limit reached response, this is critical fault and should not happen.");
-                        default:
-                            logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitCreator got non-standard status code", queryBuilder, response);
-                            return new ConduitCreateResponse();
-                    }
-                }
-                catch (HttpRequestException ex)
+                switch (response.StatusCode)
                 {
-                    logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitCreator returned exception", ex, conduitCreate);
-                    return new ConduitCreateResponse();
+                    case HttpStatusCode.OK: return JsonConvert.DeserializeObject<ConduitCreateResponse>(body);
+                    case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitCreator failed due" + body + response.ReasonPhrase);
+                    case HttpStatusCode.TooManyRequests: throw new InvalidOperationException("Conduit returned limit reached response, this is critical fault and should not happen.");
+                    default:
+                        logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitCreator got non-standard status code", queryBuilder, response);
+                        return new ConduitCreateResponse();
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitCreator returned exception", ex, conduitCreate);
+                return new ConduitCreateResponse();
             }
         }
 
         public async Task<ConduitUpdateResponse> ConduitUpdateAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId, int size)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
+            var conduitCreate = new ConduitUpdateRequest { Id = conduitId, ShardCount = size };
+            var request = new HttpRequestMessage(HttpMethod.Patch, ConduitUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Headers.Add("Client-Id", clientId);
+            request.Content = new StringContent(JsonConvert.SerializeObject(conduitCreate), Encoding.UTF8, "application/json");
+
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
-                var conduitCreate = new ConduitUpdateRequest { Id = conduitId, ShardCount = size };
-                HttpContent content = new StringContent(JsonConvert.SerializeObject(conduitCreate), Encoding.UTF8, "application/json");
-
-                try
+                var response = await httpClient.SendAsync(request, clSource.Token);
+                var body = await response.Content.ReadAsStringAsync(clSource.Token);
+                if (string.IsNullOrWhiteSpace(body))
                 {
-                    var response = await httpClient.PatchAsync(ConduitUrl, content, clSource.Token);
-                    var body = await response.Content.ReadAsStringAsync(clSource.Token);
-                    if (string.IsNullOrWhiteSpace(body))
-                    {
-                        body = string.Empty;
-                    }
+                    body = string.Empty;
+                }
 
-                    switch (response.StatusCode)
-                    {
-                        case HttpStatusCode.OK: return JsonConvert.DeserializeObject<ConduitUpdateResponse>(body) ?? new ConduitUpdateResponse();
-                        case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitUpdate failed due" + body + response.ReasonPhrase);
-                        default:
-                            logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitUpdate got non-standard status code", response);
-                            return new ConduitUpdateResponse();
-                    }
-                }
-                catch (HttpRequestException ex)
+                switch (response.StatusCode)
                 {
-                    logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitUpdate returned exception", ex, conduitCreate);
-                    return new ConduitUpdateResponse();
+                    case HttpStatusCode.OK: return JsonConvert.DeserializeObject<ConduitUpdateResponse>(body) ?? new ConduitUpdateResponse();
+                    case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitUpdate failed due" + body + response.ReasonPhrase);
+                    default:
+                        logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitUpdate got non-standard status code", response);
+                        return new ConduitUpdateResponse();
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitUpdate returned exception", ex, conduitCreate);
+                return new ConduitUpdateResponse();
             }
         }
         public async Task<bool> ConduitDeleteAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
+            var url = $"{ConduitUrl}?id={conduitId}";
+            var request = new HttpRequestMessage(HttpMethod.Delete, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Headers.Add("Client-Id", clientId);
+
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
-                var url = $"{ConduitUrl}?id={conduitId}";
-                try
+                var response = await httpClient.SendAsync(request, clSource.Token);
+                var body = await response.Content.ReadAsStringAsync(clSource.Token);
+                if (string.IsNullOrWhiteSpace(body))
                 {
-
-                    var response = await httpClient.DeleteAsync(url, clSource.Token);
-                    var body = await response.Content.ReadAsStringAsync(clSource.Token);
-                    if (string.IsNullOrWhiteSpace(body))
-                    {
-                        body = string.Empty;
-                    }
-
-                    switch (response.StatusCode)
-                    {
-                        case HttpStatusCode.OK: return true;
-                        case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitDelete failed due" + body + response.ReasonPhrase);
-                        default:
-                            logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitDelete got non-standard status code", response);
-                            return default;
-                    }
+                    body = string.Empty;
                 }
-                catch (HttpRequestException ex)
+
+                switch (response.StatusCode)
                 {
-                    logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitDelete returned exception", ex, url);
-                    return default;
+                    case HttpStatusCode.OK: return true;
+                    case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitDelete failed due" + body + response.ReasonPhrase);
+                    default:
+                        logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitDelete got non-standard status code", response);
+                        return default;
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitDelete returned exception", ex, url);
+                return default;
             }
         }
         public async Task<ConduitGetShardsResponse> ConduitGetShardsAsync(string accessToken, string clientId, CancellationTokenSource clSource, ILogger logger, string conduitId, SubscriptionStatusTypes status = SubscriptionStatusTypes.Empty, string after = null)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
+            var url = $"{ConduitShardsUrl}?conduit_id={conduitId}";
+            if (status != SubscriptionStatusTypes.Empty)
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
-                var url = $"{ConduitShardsUrl}?conduit_id={conduitId}";
-                if (status != SubscriptionStatusTypes.Empty)
-                {
-                    url += $"?status={StatusProvider.GetStatusString(status)}";
-                }
-                if (after != null)
-                {
-                    url += $"?after={after}";
-                }
-                try
-                {
+                url += $"?status={StatusProvider.GetStatusString(status)}";
+            }
+            if (after != null)
+            {
+                url += $"?after={after}";
+            }
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Headers.Add("Client-Id", clientId);
 
-                    var response = await httpClient.GetAsync(url, clSource.Token);
-                    var body = await response.Content.ReadAsStringAsync(clSource.Token);
-                    if (string.IsNullOrWhiteSpace(body))
-                    {
-                        body = string.Empty;
-                    }
-
-                    switch (response.StatusCode)
-                    {
-                        case HttpStatusCode.OK: return JsonConvert.DeserializeObject<ConduitGetShardsResponse>(body) ?? new ConduitGetShardsResponse();
-                        case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitDelete failed due" + body + response.ReasonPhrase);
-                        default:
-                            logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitDelete got non-standard status code", response);
-                            return default;
-                    }
-                }
-                catch (HttpRequestException ex)
+            try
+            {
+                var response = await httpClient.SendAsync(request, clSource.Token);
+                var body = await response.Content.ReadAsStringAsync(clSource.Token);
+                if (string.IsNullOrWhiteSpace(body))
                 {
-                    logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitDelete returned exception", ex, url);
-                    return default;
+                    body = string.Empty;
                 }
+
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK: return JsonConvert.DeserializeObject<ConduitGetShardsResponse>(body) ?? new ConduitGetShardsResponse();
+                    case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("ConduitDelete failed due" + body + response.ReasonPhrase);
+                    default:
+                        logger.LogWarning("[EventSubClient] - [TwitchApiConduit] - ConduitDelete got non-standard status code", response);
+                        return default;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError($"[EventSubClient] - [TwitchApiConduit] - ConduitDelete returned exception", ex, url);
+                return default;
             }
         }
         public async Task<List<ConduitShard>> GetAllConduitGetShardsAsync(string clientId, string accessToken, string conduitId, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector = SubscriptionStatusTypes.Enabled)
@@ -208,12 +204,13 @@ namespace Twitch.EventSub.APIConduit
         public async Task<List<string>> GetConduitIdsAsync(string appAccessToken, string clientId, CancellationToken ct)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", appAccessToken);
-            httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
+            var request = new HttpRequestMessage(HttpMethod.Get, ConduitUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", appAccessToken);
+            request.Headers.Add("Client-Id", clientId);
 
             try
             {
-                var response = await httpClient.GetAsync(ConduitUrl, ct);
+                var response = await httpClient.SendAsync(request, ct);
                 var body = await response.Content.ReadAsStringAsync(ct);
 
                 switch (response.StatusCode)
@@ -250,10 +247,8 @@ namespace Twitch.EventSub.APIConduit
         public async Task UpdateConduitShardSessionAsync(string conduitId, string twitchShardIndex, string sessionId, string appAccessToken, string clientId, CancellationToken ct)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApiConduit);
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", appAccessToken);
-            httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
 
-            var request = new ConduitUpdateShardRequest
+            var body = new ConduitUpdateShardRequest
             {
                 ConduitId = conduitId,
                 Shards = new List<ShardUpdateItem>
@@ -270,12 +265,15 @@ namespace Twitch.EventSub.APIConduit
                 }
             };
 
-            HttpContent content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+            var request = new HttpRequestMessage(HttpMethod.Patch, ConduitShardsUrl);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", appAccessToken);
+            request.Headers.Add("Client-Id", clientId);
+            request.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
 
             try
             {
-                var response = await httpClient.PatchAsync(ConduitShardsUrl, content, ct);
-                var body = await response.Content.ReadAsStringAsync(ct);
+                var response = await httpClient.SendAsync(request, ct);
+                var responseBody = await response.Content.ReadAsStringAsync(ct);
 
                 switch (response.StatusCode)
                 {
@@ -285,7 +283,7 @@ namespace Twitch.EventSub.APIConduit
                     case HttpStatusCode.Unauthorized:
                         throw new InvalidAccessTokenException("UpdateConduitShardSession failed: " + response.ReasonPhrase);
                     default:
-                        throw new InvalidOperationException($"UpdateConduitShardSession got unexpected status {response.StatusCode}: {body}");
+                        throw new InvalidOperationException($"UpdateConduitShardSession got unexpected status {response.StatusCode}: {responseBody}");
                 }
             }
             catch (HttpRequestException ex)

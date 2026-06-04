@@ -37,34 +37,33 @@ namespace Twitch.EventSub.API
         public async Task<bool> SubscribeAsync(string? clientId, string? accessToken, CreateSubscriptionRequest request, CancellationTokenSource clSource, ILogger logger, string? url = null)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
-                try
-                {
-                    string requestBody = JsonConvert.SerializeObject(request);
-                    var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+                string requestBody = JsonConvert.SerializeObject(request);
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url ?? BaseUrl);
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                httpRequest.Headers.Add("Client-Id", clientId);
+                httpRequest.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
-                    var response = await httpClient.PostAsync(url ?? BaseUrl, content, clSource.Token).ConfigureAwait(false);
-                    switch (response.StatusCode)
-                    {
-                        case HttpStatusCode.Accepted:
-                            return true;
-
-                        case HttpStatusCode.Unauthorized:
-                            throw new InvalidAccessTokenException("Subscribe failed due" + await response.Content.ReadAsStreamAsync(clSource.Token) + response.ReasonPhrase);
-                        case HttpStatusCode.Forbidden:
-                            throw new Exception("Subscribe - Invalid Scopes");
-                        default:
-                            logger.LogWarningDetails("[EventSubClient] - [TwitchApi] - Subscribe got non-standard status code", requestBody, content, response);
-                            return false;
-                    }
-                }
-                catch (HttpRequestException ex)
+                var response = await httpClient.SendAsync(httpRequest, clSource.Token).ConfigureAwait(false);
+                switch (response.StatusCode)
                 {
-                    logger.LogErrorDetails($"[EventSubClient] - [TwitchApi] - SubscribeAsync returned exception", ex, request);
-                    return false;
+                    case HttpStatusCode.Accepted:
+                        return true;
+
+                    case HttpStatusCode.Unauthorized:
+                        throw new InvalidAccessTokenException("Subscribe failed due" + await response.Content.ReadAsStreamAsync(clSource.Token) + response.ReasonPhrase);
+                    case HttpStatusCode.Forbidden:
+                        throw new Exception("Subscribe - Invalid Scopes");
+                    default:
+                        logger.LogWarningDetails("[EventSubClient] - [TwitchApi] - Subscribe got non-standard status code", requestBody, httpRequest.Content, response);
+                        return false;
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogErrorDetails($"[EventSubClient] - [TwitchApi] - SubscribeAsync returned exception", ex, request);
+                return false;
             }
         }
 
@@ -79,29 +78,29 @@ namespace Twitch.EventSub.API
         public async Task<bool> UnSubscribeAsync(string? clientId, string? accessToken, string subscriptionId, CancellationTokenSource clSource, ILogger logger, string? url = null)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
-                try
-                {
-                    var urlSol = $"{url ?? BaseUrl}?id={subscriptionId}";
-                    var response = await httpClient.DeleteAsync(urlSol, clSource.Token).ConfigureAwait(false);
+                var urlSol = $"{url ?? BaseUrl}?id={subscriptionId}";
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Delete, urlSol);
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                httpRequest.Headers.Add("Client-Id", clientId);
 
-                    switch (response.StatusCode)
-                    {
-                        case HttpStatusCode.NoContent: return true;
-                        case HttpStatusCode.Unauthorized:
-                            throw new InvalidAccessTokenException("Unsubscribe failed due" + await response.Content.ReadAsStringAsync(clSource.Token) + response.ReasonPhrase);
-                        default:
-                            logger.LogWarningDetails("[EventSubClient] - [TwitchApi] - UnSubscribeAsync got non-standard status code:", response);
-                            return false;
-                    };
-                }
-                catch (HttpRequestException ex)
+                var response = await httpClient.SendAsync(httpRequest, clSource.Token).ConfigureAwait(false);
+
+                switch (response.StatusCode)
                 {
-                    logger.LogErrorDetails($"[EventSubClient] - [TwitchApi] - UnsubscribeAsync returned exception", ex);
-                    return false;
-                }
+                    case HttpStatusCode.NoContent: return true;
+                    case HttpStatusCode.Unauthorized:
+                        throw new InvalidAccessTokenException("Unsubscribe failed due" + await response.Content.ReadAsStringAsync(clSource.Token) + response.ReasonPhrase);
+                    default:
+                        logger.LogWarningDetails("[EventSubClient] - [TwitchApi] - UnSubscribeAsync got non-standard status code:", response);
+                        return false;
+                };
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogErrorDetails($"[EventSubClient] - [TwitchApi] - UnsubscribeAsync returned exception", ex);
+                return false;
             }
         }
 
@@ -119,41 +118,40 @@ namespace Twitch.EventSub.API
             var status = StatusProvider.GetStatusString(statusSelector);
 
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                httpClient.DefaultRequestHeaders.Add("Client-Id", clientId);
+                var queryBuilder = new StringBuilder(url ?? BaseUrl);
 
-                try
+                if (!string.IsNullOrEmpty(status))
+                    queryBuilder.Append($"?status={WebUtility.UrlEncode(status)}");
+
+                if (!string.IsNullOrEmpty(after))
+                    queryBuilder.Append($"&after={WebUtility.UrlEncode(after)}");
+
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Get, queryBuilder.ToString());
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                httpRequest.Headers.Add("Client-Id", clientId);
+
+                var response = await httpClient.SendAsync(httpRequest, clSource.Token).ConfigureAwait(false);
+                var body = await response.Content.ReadAsStringAsync(clSource.Token);
+                if (string.IsNullOrEmpty(body))
                 {
-                    var queryBuilder = new StringBuilder(url ?? BaseUrl);
-
-                    if (!string.IsNullOrEmpty(status))
-                        queryBuilder.Append($"?status={WebUtility.UrlEncode(status)}");
-
-                    if (!string.IsNullOrEmpty(after))
-                        queryBuilder.Append($"&after={WebUtility.UrlEncode(after)}");
-
-                    var response = await httpClient.GetAsync(queryBuilder.ToString(), clSource.Token).ConfigureAwait(false);
-                    var body = await response.Content.ReadAsStringAsync(clSource.Token);
-                    if (string.IsNullOrEmpty(body))
-                    {
-                        body = string.Empty;
-                    }
-
-                    switch (response.StatusCode)
-                    {
-                        case HttpStatusCode.OK: return JsonConvert.DeserializeObject<GetSubscriptionsResponse>(body);
-                        case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("GetSubscriptions failed due" + body + response.ReasonPhrase);
-                        default:
-                            logger.LogWarningDetails("[EventSubClient] - [TwitchApi] - GetSubscriptions got non-standard status code", queryBuilder, response);
-                            return default;
-                    }
+                    body = string.Empty;
                 }
-                catch (HttpRequestException ex)
+
+                switch (response.StatusCode)
                 {
-                    logger.LogErrorDetails($"[EventSubClient] - [TwitchApi] - GetSubscriptions returned exception", ex, status);
-                    return default;
+                    case HttpStatusCode.OK: return JsonConvert.DeserializeObject<GetSubscriptionsResponse>(body);
+                    case HttpStatusCode.Unauthorized: throw new InvalidAccessTokenException("GetSubscriptions failed due" + body + response.ReasonPhrase);
+                    default:
+                        logger.LogWarningDetails("[EventSubClient] - [TwitchApi] - GetSubscriptions got non-standard status code", queryBuilder, response);
+                        return default;
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogErrorDetails($"[EventSubClient] - [TwitchApi] - GetSubscriptions returned exception", ex, status);
+                return default;
             }
         }
 
@@ -169,31 +167,21 @@ namespace Twitch.EventSub.API
         {
             var allSubscriptions = new List<GetSubscriptionsResponse>();
             string? afterCursor = null;
-            int totalPossibleIterations = Int32.MaxValue;
 
-            for (int i = 0; i < totalPossibleIterations; i++)
+            do
             {
                 var response = await GetSubscriptionsAsync(clientId, accessToken, statusSelector, clSource, logger, afterCursor, url).ConfigureAwait(false);
-                if (response != null)
-                {
-                    allSubscriptions.Add(response);
-                    if (afterCursor == null)
-                    {
-                        totalPossibleIterations = response.Total;
-                    }
-                    afterCursor = response.Cursor;
-                }
-                else
+                if (response == null)
                 {
                     logger.LogInformation("[EventSubClient] - [TwitchApi] Response returned null cause of invalid userId or filter parameter");
                     break;
                 }
 
-                if (string.IsNullOrEmpty(afterCursor))
-                {
-                    break;
-                }
+                allSubscriptions.Add(response);
+                afterCursor = response.Pagination.Cursor;
             }
+            while (!string.IsNullOrEmpty(afterCursor));
+
             if (allSubscriptions.Count == 0)
             {
                 logger.LogInformation("[EventSubClient] - [TwitchApi] List of subscriptions returned EMPTY!");
@@ -213,30 +201,30 @@ namespace Twitch.EventSub.API
         public async Task<bool> ValidateTokenAsync(string? accessToken, CancellationTokenSource clSource, ILogger logger, string? url = null)
         {
             var httpClient = _httpClientFactory.CreateClient(HttpClientNames.TwitchApi);
+            try
             {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", accessToken);
-                try
-                {
-                    var response = await httpClient.GetAsync(url ?? ValidateUrl, clSource.Token).ConfigureAwait(false);
-                    switch (response.StatusCode)
-                    {
-                        case System.Net.HttpStatusCode.OK:
-                            logger.LogDebug("[EventSubClient] - [TwitchApi] Validation of Token Successfull {StatusCode}", response.StatusCode);
-                            return true;
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Get, url ?? ValidateUrl);
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("OAuth", accessToken);
 
-                        case System.Net.HttpStatusCode.Unauthorized:
-                            var errorMessage = await response.Content.ReadAsStringAsync(clSource.Token);
-                            throw new InvalidAccessTokenException($"[EventSubClient] - [TwitchApi] Validation of token failed: {errorMessage} {response.ReasonPhrase}");
-                        default:
-                            logger.LogWarning("[EventSubClient] - [TwitchApi] ValidateTokenAsync got non-standard status code: {StatusCode}", response.StatusCode);
-                            return false;
-                    }
-                }
-                catch (HttpRequestException ex)
+                var response = await httpClient.SendAsync(httpRequest, clSource.Token).ConfigureAwait(false);
+                switch (response.StatusCode)
                 {
-                    logger.LogError(ex, "[EventSubClient] - [TwitchApi] ValidateTokenAsync encountered an exception.");
-                    return false;
+                    case System.Net.HttpStatusCode.OK:
+                        logger.LogDebug("[EventSubClient] - [TwitchApi] Validation of Token Successfull {StatusCode}", response.StatusCode);
+                        return true;
+
+                    case System.Net.HttpStatusCode.Unauthorized:
+                        var errorMessage = await response.Content.ReadAsStringAsync(clSource.Token);
+                        throw new InvalidAccessTokenException($"[EventSubClient] - [TwitchApi] Validation of token failed: {errorMessage} {response.ReasonPhrase}");
+                    default:
+                        logger.LogWarning("[EventSubClient] - [TwitchApi] ValidateTokenAsync got non-standard status code: {StatusCode}", response.StatusCode);
+                        return false;
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError(ex, "[EventSubClient] - [TwitchApi] ValidateTokenAsync encountered an exception.");
+                return false;
             }
         }
     }

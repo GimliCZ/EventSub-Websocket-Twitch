@@ -16,11 +16,7 @@
         <RepositoryUrl>https://github.com/GimliCZ/EventSub-Websocket-Twitch/</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-<<<<<<< HEAD
         <Version>3.1.0</Version>
-=======
-        <Version>3.0.2</Version>
->>>>>>> master
         <RepositoryType>git</RepositoryType>
         <LangVersion>14</LangVersion>
     </PropertyGroup>

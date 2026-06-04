@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Twitch.EventSub.Messages.SharedContents;
 
 namespace Twitch.EventSub.API.Models
@@ -9,7 +9,7 @@ namespace Twitch.EventSub.API.Models
         public int Total { get; set; }
 
         [JsonProperty("data")]
-        public List<WebSocketSubscription> Data { get; set; }
+        public List<WebSocketSubscription> Data { get; set; } = new();
 
         [JsonProperty("total_cost")]
         public int TotalCost { get; set; }
@@ -18,9 +18,12 @@ namespace Twitch.EventSub.API.Models
         public int MaxTotalCost { get; set; }
 
         [JsonProperty("pagination")]
-        public object Pagination { get; set; }
+        public SubscriptionPagination Pagination { get; set; } = new();
+    }
 
+    public class SubscriptionPagination
+    {
         [JsonProperty("cursor")]
-        public string Cursor { get; set; }
+        public string? Cursor { get; set; }
     }
 }

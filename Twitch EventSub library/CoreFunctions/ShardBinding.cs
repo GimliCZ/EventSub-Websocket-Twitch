@@ -1,14 +1,9 @@
-using System.Reactive.Linq;
-using Twitch.EventSub.Messages;
-using Twitch.EventSub.Messages.NotificationMessage;
-
 namespace Twitch.EventSub.CoreFunctions;
 
 /// <summary>
 /// Internal implementation of IShardBinding created by ShardManager per user.
-/// UserMessages filters the shard's message stream to only messages for this user:
-///   Category A: Payload.Subscription.Condition.BroadcasterUserId == userId
-///   Category B: Payload.Subscription.Condition.UserId == userId
+/// Lifecycle-only: exposes the shard's stream and session changes. Message routing is
+/// performed by the MessagePipeline, not here.
 /// </summary>
 internal class ShardBinding : IShardBinding
 {
@@ -22,8 +17,8 @@ internal class ShardBinding : IShardBinding
     public string ShardId => _sequencer.ShardId;
     public string SessionId => _sequencer.SessionId ?? string.Empty;
 
-    public IObservable<WebSocketMessage> UserMessages => _sequencer.Messages
-        .Where(msg => IsForUser(msg, _userId));
+    public IObservable<ShardInbound> ShardStream => _sequencer.Messages;
+    public int? NegotiatedKeepaliveSeconds => _sequencer.NegotiatedKeepaliveSeconds;
 
     public event EventHandler? OnShardLost;
     public event EventHandler<string>? OnSessionIdChanged;
@@ -49,17 +44,5 @@ internal class ShardBinding : IShardBinding
     {
         _sequencer.OnClosed -= _closedHandler;
         _manager.OnSessionIdUpdated -= _sessionHandler;
-    }
-
-    private static bool IsForUser(WebSocketMessage msg, string userId)
-    {
-        if (msg is not WebSocketNotificationMessage notification) return false;
-        var condition = notification.Payload?.Subscription?.Condition;
-        if (condition == null) return false;
-        // Category A: broadcaster_user_id matches
-        if (condition.BroadcasterUserId == userId) return true;
-        // Category B: user_id matches (whispers, user.update, etc.)
-        if (condition.UserId == userId) return true;
-        return false;
     }
 }

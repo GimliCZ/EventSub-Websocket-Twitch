@@ -17,6 +17,13 @@ public record EventSubClientOptions
     public int KeepaliveTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
+    /// Number of recent message IDs the shared replay-protection gate remembers for
+    /// at-least-once de-duplication across all users. Default 100.
+    /// </summary>
+    [Range(1, int.MaxValue)]
+    public int DedupWindowSize { get; set; } = 100;
+
+    /// <summary>
     /// Twitch hard limit: maximum number of enabled conduits per client.
     /// Subject to change — see https://dev.twitch.tv/docs/eventsub/eventsub-reference/
     /// </summary>
@@ -31,6 +38,13 @@ public record EventSubClientOptions
     /// <summary>Operator ceiling on enabled conduits. Must not exceed <see cref="TwitchMaxConduits"/>.</summary>
     [Range(1, TwitchMaxConduits)]
     public int MaxConduits { get; set; } = TwitchMaxConduits;
+
+    /// <summary>
+    /// Number of redundant conduit replicas. Each shard's session is mirrored across this many
+    /// independent conduits so events are delivered redundantly. Default 1 (no redundancy).
+    /// </summary>
+    [Range(1, 3)]
+    public int RedundancyFactor { get; set; } = 1;
 
     /// <summary>Operator ceiling on shard count per conduit. Must not exceed <see cref="TwitchMaxShardsPerConduit"/>.</summary>
     [Range(1, TwitchMaxShardsPerConduit)]

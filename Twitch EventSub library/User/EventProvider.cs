@@ -43,12 +43,19 @@ namespace Twitch.EventSub.User
         private List<SubscriptionTypes> _listOfSubs;
         private readonly ILogger _logger;
         private readonly string _userId;
-        private UserSequencer _userSequencer;
+        private UserSequencer[] _sequencers;
         private readonly Timer _recoveryTimer;
         private readonly bool _allowRecovery;
         private readonly TwitchApi _twitchApi;
         private readonly IConduitOrchestrator _conduitOrchestrator;
         private readonly string _appAccessToken;
+        private readonly IShardManager _shardManager;
+        private readonly ReplayProtection _replayProtection;
+        private readonly IMessagePipeline _messagePipeline;
+        private readonly int _keepAliveTimeoutSeconds;
+        private readonly int _redundancyFactor;
+        private IShardBinding?[] _shardBindings;
+        private bool[] _bindingApplied;
         private string? _testingApiUrl;
         private string? _testingWebsocketUrl;
 
@@ -61,7 +68,12 @@ namespace Twitch.EventSub.User
             bool allowRecovery,
             TwitchApi twitchApi,
             IConduitOrchestrator conduitOrchestrator,
-            string appAccessToken)
+            string appAccessToken,
+            IShardManager shardManager,
+            ReplayProtection replayProtection,
+            IMessagePipeline messagePipeline,
+            int keepAliveTimeoutSeconds,
+            int redundancyFactor = 1)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(userId, nameof(userId));
             ArgumentException.ThrowIfNullOrWhiteSpace(accessToken, nameof(accessToken));
@@ -78,6 +90,14 @@ namespace Twitch.EventSub.User
             _twitchApi = twitchApi;
             _conduitOrchestrator = conduitOrchestrator;
             _appAccessToken = appAccessToken;
+            _shardManager = shardManager;
+            _replayProtection = replayProtection;
+            _messagePipeline = messagePipeline;
+            _keepAliveTimeoutSeconds = keepAliveTimeoutSeconds;
+            _redundancyFactor = Math.Max(1, redundancyFactor);
+            _sequencers = new UserSequencer[_redundancyFactor];
+            _shardBindings = new IShardBinding?[_redundancyFactor];
+            _bindingApplied = new bool[_redundancyFactor];
             Create();
         }
 
@@ -85,7 +105,7 @@ namespace Twitch.EventSub.User
         {
             try
             {
-                if (_userSequencer?.State == UserBase.UserState.Disposed && _allowRecovery == true)
+                if (_sequencers[0]?.State == UserBase.UserState.Disposed && _allowRecovery == true)
                 {
                     await StartAsync(_testingApiUrl, _testingWebsocketUrl);
                 }
@@ -99,7 +119,7 @@ namespace Twitch.EventSub.User
         /// <summary>
         /// Directly reports Connection state from Socket, may be used for reconnect detection
         /// </summary>
-        public bool IsConnected => _userSequencer?.IsConnected == true;
+        public bool IsConnected => _sequencers.Any(s => s?.IsConnected == true);
 
         /// <summary>
         /// Notifies about connection termination.
@@ -122,31 +142,39 @@ namespace Twitch.EventSub.User
         /// </summary>
         private void Create(string? testApiUrl = null, string? testWebsocketUrl = null)
         {
-            var listOfRequests = new List<CreateSubscriptionRequest>();
-            foreach (var type in _listOfSubs)
+            for (var i = 0; i < _redundancyFactor; i++)
             {
-                listOfRequests.Add(new CreateSubscriptionRequest()
+                var listOfRequests = new List<CreateSubscriptionRequest>();
+                foreach (var type in _listOfSubs)
                 {
-                    Transport = new Transport() { Method = "websocket" },
-                    Condition = new Condition()
-                }.SetSubscriptionType(type, _userId));
+                    listOfRequests.Add(new CreateSubscriptionRequest()
+                    {
+                        Transport = new Transport() { Method = "websocket" },
+                        Condition = new Condition()
+                    }.SetSubscriptionType(type, _userId));
+                }
+                var conduitId = _conduitOrchestrator.ConduitIdAt(i);
+                _sequencers[i] = new UserSequencer(_userId, _accessToken, listOfRequests, _clientId, _logger, _twitchApi, _conduitOrchestrator, _appAccessToken, conduitId, _replayProtection, _keepAliveTimeoutSeconds, testApiUrl, testWebsocketUrl);
+                // A freshly created sequencer has no binding yet; it is (re)applied via EnsureBindingApplied.
+                _bindingApplied[i] = false;
             }
-            _userSequencer = new UserSequencer(_userId, _accessToken, listOfRequests, _clientId, _logger, _twitchApi, _conduitOrchestrator, _appAccessToken, testApiUrl, testWebsocketUrl);
 
-            _userSequencer.AccessTokenRequestedEvent += AccessTokenRequestedEventAsync;
-            _userSequencer.OnRawMessageRecievedAsync += OnRawMessageReceivedAsync;
-            _userSequencer.OnOutsideDisconnectAsync += OnOutsideDisconnectAsync;
-            _userSequencer.OnNotificationMessageAsync += Sequencer_OnNotificationMessageAsync;
-            _userSequencer.OnDispose += _userSequencer_OnDispose;
+            // ONE processing path: only sequencer[0] forwards events downstream. Replicas 1..N-1 own
+            // their conduit's subscription lifecycle and keep their shard alive, but do not forward.
+            _sequencers[0].AccessTokenRequestedEvent += AccessTokenRequestedEventAsync;
+            _sequencers[0].OnRawMessageRecievedAsync += OnRawMessageReceivedAsync;
+            _sequencers[0].OnOutsideDisconnectAsync += OnOutsideDisconnectAsync;
+            _sequencers[0].OnNotificationMessageAsync += Sequencer_OnNotificationMessageAsync;
+            _sequencers[0].OnDispose += _userSequencer_OnDispose;
         }
 
         private void _userSequencer_OnDispose(object? sender, string? e)
         {
-            _userSequencer.AccessTokenRequestedEvent -= AccessTokenRequestedEventAsync;
-            _userSequencer.OnRawMessageRecievedAsync -= OnRawMessageReceivedAsync;
-            _userSequencer.OnOutsideDisconnectAsync -= OnOutsideDisconnectAsync;
-            _userSequencer.OnNotificationMessageAsync -= Sequencer_OnNotificationMessageAsync;
-            _userSequencer.OnDispose -= _userSequencer_OnDispose;
+            _sequencers[0].AccessTokenRequestedEvent -= AccessTokenRequestedEventAsync;
+            _sequencers[0].OnRawMessageRecievedAsync -= OnRawMessageReceivedAsync;
+            _sequencers[0].OnOutsideDisconnectAsync -= OnOutsideDisconnectAsync;
+            _sequencers[0].OnNotificationMessageAsync -= Sequencer_OnNotificationMessageAsync;
+            _sequencers[0].OnDispose -= _userSequencer_OnDispose;
         }
 
         /// <summary>
@@ -154,16 +182,47 @@ namespace Twitch.EventSub.User
         /// Regenerates Sequencer object, in case if its internaly disposed
         /// </summary>
         /// <returns></returns>
-        internal Task StartAsync(string testingApiUrl = null, string testingWebsocketUrl = null)
+        internal async Task StartAsync(string testingApiUrl = null, string testingWebsocketUrl = null)
         {
-            if (_userSequencer.IsDisposed())
+            if (_sequencers[0].IsDisposed())
             {
                 _testingApiUrl = testingApiUrl;
                 _testingWebsocketUrl = testingWebsocketUrl;
                 Create(testingApiUrl, testingWebsocketUrl);
             }
+            // Attach each replica's sequencer to its own live shard before it reaches its Websocket state.
+            for (var i = 0; i < _redundancyFactor; i++)
+            {
+                _shardBindings[i] ??= await _shardManager.GetOrCreateShardForUserAsync(_userId, replicaIndex: i, CancellationToken.None);
+                EnsureBindingApplied(i);
+            }
+            // ONE processing path: all replica shard streams route (via the pipeline's single per-userId
+            // handler) to sequencer[0], whose downstream shared dedup gate collapses cross-conduit copies.
+            _messagePipeline.RegisterUser(_userId, _sequencers[0].HandleInboundAsync);
             ResolveRecovery(true);
-            return _userSequencer.StartAsync();
+            for (var i = 0; i < _redundancyFactor; i++)
+            {
+                await _sequencers[i].StartAsync();
+            }
+        }
+
+        /// <summary>
+        /// Assigns the shard binding for this user. Applied to the current (and any future re-created)
+        /// UserSequencer exactly once per sequencer instance.
+        /// </summary>
+        internal void SetShardBinding(IShardBinding binding)
+        {
+            _shardBindings[0] = binding;
+            EnsureBindingApplied(0);
+        }
+
+        private void EnsureBindingApplied(int i)
+        {
+            if (_shardBindings[i] != null && !_bindingApplied[i])
+            {
+                _sequencers[i].SetShardBinding(_shardBindings[i]!);
+                _bindingApplied[i] = true;
+            }
         }
 
         private void ResolveRecovery(bool shouldRun)
@@ -185,10 +244,26 @@ namespace Twitch.EventSub.User
         /// Method to stop the UserSequencer instance asynchronously
         /// </summary>
         /// <returns>Returns true on success, false if object is in invalid state to be stopped.</returns>
-        internal Task<bool> StopAsync()
+        internal async Task<bool> StopAsync()
         {
             ResolveRecovery(false);
-            return _userSequencer.StopAsync();
+            _messagePipeline.UnregisterUser(_userId);
+            var result = true;
+            for (var i = 0; i < _redundancyFactor; i++)
+            {
+                result &= await _sequencers[i].StopAsync();
+            }
+            for (var i = 0; i < _redundancyFactor; i++)
+            {
+                if (_shardBindings[i] != null)
+                {
+                    await _shardManager.ReleaseUserFromShardAsync(_userId, replicaIndex: i, CancellationToken.None);
+                    _shardBindings[i]!.Dispose();
+                    _shardBindings[i] = null;
+                    _bindingApplied[i] = false;
+                }
+            }
+            return result;
         }
 
         /// <summary>
@@ -206,17 +281,22 @@ namespace Twitch.EventSub.User
             _accessToken = accessToken;
             _listOfSubs = listOfSubs;
 
-            var listOfRequests = new List<CreateSubscriptionRequest>();
-            foreach (var type in listOfSubs)
+            var result = true;
+            for (var i = 0; i < _redundancyFactor; i++)
             {
-                listOfRequests.Add(new CreateSubscriptionRequest()
+                var listOfRequests = new List<CreateSubscriptionRequest>();
+                foreach (var type in listOfSubs)
                 {
-                    Transport = new Transport() { Method = "websocket" },
-                    Condition = new Condition()
-                }.SetSubscriptionType(type, _userSequencer.UserId));
-            }
+                    listOfRequests.Add(new CreateSubscriptionRequest()
+                    {
+                        Transport = new Transport() { Method = "websocket" },
+                        Condition = new Condition()
+                    }.SetSubscriptionType(type, _sequencers[i].UserId));
+                }
 
-            return _userSequencer.Update(accessToken, listOfRequests);
+                result &= _sequencers[i].Update(accessToken, listOfRequests);
+            }
+            return result;
         }
 
         /// <summary>

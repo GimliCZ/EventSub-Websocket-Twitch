@@ -18,6 +18,11 @@ public class ReplayProtection
     private long _counter;
     private readonly object _evictionLock = new();
 
+    // Key = eventKey (content hash), Value = insertion-order counter for eviction
+    private readonly ConcurrentDictionary<string, long> _seenEvents = new();
+    private long _eventCounter;
+    private readonly object _eventEvictionLock = new();
+
     public ReplayProtection(int messagesToRemember)
     {
         _maxSize = messagesToRemember;
@@ -46,6 +51,35 @@ public class ReplayProtection
         // TryAdd returns true only for the first caller with this key — atomic.
         long order = Interlocked.Increment(ref _counter);
         if (!_seen.TryAdd(messageId, order))
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns true if this event key (content hash) has been seen before (duplicate cross-conduit copy).
+    /// Uses an independent window from the message-id window.
+    /// Thread-safe: concurrent calls with the same key return true for all but the first.
+    /// </summary>
+    public bool IsDuplicateEvent(string eventKey)
+    {
+        // Evict oldest entries BEFORE adding so that a previously-evicted key
+        // is no longer in the dictionary when TryAdd is called.
+        if (_seenEvents.Count >= _maxSize)
+        {
+            lock (_eventEvictionLock)
+            {
+                while (_seenEvents.Count >= _maxSize)
+                {
+                    var oldest = _seenEvents.OrderBy(kv => kv.Value).First();
+                    _seenEvents.TryRemove(oldest.Key, out _);
+                }
+            }
+        }
+
+        // TryAdd returns true only for the first caller with this key — atomic.
+        long order = Interlocked.Increment(ref _eventCounter);
+        if (!_seenEvents.TryAdd(eventKey, order))
             return true;
 
         return false;

@@ -1,5 +1,6 @@
 ﻿using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Models;
+using Twitch.EventSub.SubsRegister;
 
 namespace Twitch.EventSub.API.Extensions
 {
@@ -79,6 +80,21 @@ namespace Twitch.EventSub.API.Extensions
                 return request;
             }
             throw new ArgumentException("Invalid subscription");
+        }
+
+        /// <summary>
+        /// Dedicated builder for conduit.shard.disabled subscriptions.
+        /// This subscription requires both client_id and conduit_id as conditions,
+        /// and is the recommended health-monitoring subscription for conduits.
+        /// </summary>
+        public static CreateSubscriptionRequest SetConduitShardDisabled(this CreateSubscriptionRequest request, string clientId, string conduitId)
+        {
+            request.Type = Twitch.EventSub.SubsRegister.RegisterKeys.ConduitShardDisabled.ToEventString();
+            request.Version = "1";
+            request.Condition ??= new Condition();
+            request.Condition.ClientId = clientId;
+            request.Condition.ConduitId = conduitId;
+            return request;
         }
     }
 }

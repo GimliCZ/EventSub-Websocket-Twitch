@@ -12,8 +12,10 @@ public interface IShardBinding : IDisposable
 {
     string ShardId { get; }
     string SessionId { get; }
-    /// <summary>Pre-filtered message stream for this user's broadcaster_user_id / user_id.</summary>
-    IObservable<WebSocketMessage> UserMessages { get; }
+    /// <summary>Ordered stream of all frames from this shard's active connection.</summary>
+    IObservable<ShardInbound> ShardStream { get; }
+    /// <summary>Keepalive seconds negotiated via the shard's Welcome message, if known.</summary>
+    int? NegotiatedKeepaliveSeconds { get; }
     /// <summary>Fired when the shard WebSocket goes down unexpectedly.</summary>
     event EventHandler OnShardLost;
     /// <summary>Fired when a reconnect completes and a new session_id is available.</summary>

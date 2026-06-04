@@ -23,6 +23,10 @@ namespace Twitch.EventSub
         private readonly TwitchApi _twitchApi;
         private readonly IConduitOrchestrator _conduitOrchestrator;
         private readonly IShardManager _shardManager;
+        private readonly ReplayProtection _replayProtection;
+        private readonly IMessagePipeline _messagePipeline;
+        private readonly int _keepAliveTimeoutSeconds;
+        private readonly int _redundancyFactor;
         private int _disposed;
 
         /// <summary>
@@ -38,15 +42,21 @@ namespace Twitch.EventSub
             ILogger<EventSubClient> logger,
             TwitchApi twitchApi,
             IConduitOrchestrator conduitOrchestrator,
-            IShardManager shardManager)
+            IShardManager shardManager,
+            ReplayProtection replayProtection,
+            IMessagePipeline messagePipeline)
         {
             _clientId = options.Value.ClientId;
             _appAccessToken = options.Value.AppAccessToken;
+            _keepAliveTimeoutSeconds = options.Value.KeepaliveTimeoutSeconds;
+            _redundancyFactor = options.Value.RedundancyFactor;
             _eventDictionary = new ConcurrentDictionary<string, EventProvider>();
             _logger = logger;
             _twitchApi = twitchApi;
             _conduitOrchestrator = conduitOrchestrator;
             _shardManager = shardManager;
+            _replayProtection = replayProtection;
+            _messagePipeline = messagePipeline;
             _logger.LogDebug("EventSubClient instantiated with clientId: {ClientId}", _clientId);
         }
 
@@ -93,7 +103,7 @@ namespace Twitch.EventSub
                 return false;
             }
 
-            var eventProvider = new EventProvider(userId, accessToken, listOfSubs, _clientId, _logger, allowRecovery, _twitchApi, _conduitOrchestrator, _appAccessToken);
+            var eventProvider = new EventProvider(userId, accessToken, listOfSubs, _clientId, _logger, allowRecovery, _twitchApi, _conduitOrchestrator, _appAccessToken, _shardManager, _replayProtection, _messagePipeline, _keepAliveTimeoutSeconds, _redundancyFactor);
             _logger.LogDebug("Attempting to add user");
             return _eventDictionary.TryAdd(userId, eventProvider);
         }
@@ -227,6 +237,21 @@ namespace Twitch.EventSub
             _logger.LogInformation("EventSubClient starting — initializing conduit");
             await _conduitOrchestrator.InitializeAsync(cancellationToken);
             _shardManager.OnSessionIdUpdated += OnShardSessionIdUpdated;
+
+            // Route conduit.shard.disabled control notifications to the orchestrator (platform handler),
+            // and give the orchestrator a way to open a fresh shard session to reactivate the slot.
+            _conduitOrchestrator.OpenReplacementSessionAsync = (replicaIndex, ct) =>
+                _shardManager.OpenReplacementShardAsync(replicaIndex, ct);
+            // Detailed seam (preferred): also surfaces the internal shard id so the orchestrator can remap
+            // the reactivated slot. This is what prevents recovery from spawning a second conduit slot.
+            _conduitOrchestrator.OpenReplacementShardDetailedAsync = (replicaIndex, ct) =>
+                _shardManager.OpenReplacementShardDetailedAsync(replicaIndex, ct);
+            _messagePipeline.RegisterPlatformHandler(n =>
+            {
+                if (n.Payload?.Event is Twitch.EventSub.Messages.NotificationMessage.Events.ConduitShardDisabledEvent ev)
+                    return _conduitOrchestrator.HandleShardDisabledAsync(ev.ConduitId, ev.ShardId, CancellationToken.None);
+                return Task.CompletedTask;
+            });
         }
 
         /// <summary>
@@ -257,12 +282,12 @@ namespace Twitch.EventSub
             {
                 if (args.NewSessionId == null)
                 {
-                    await _conduitOrchestrator.RemoveShardAsync(args.ShardId, CancellationToken.None);
+                    await _conduitOrchestrator.RemoveShardAsync(args.ReplicaIndex, args.ShardId, CancellationToken.None);
                 }
                 else if (args.OldSessionId == null)
-                    await _conduitOrchestrator.AddShardAsync(args.ShardId, args.NewSessionId, CancellationToken.None);
+                    await _conduitOrchestrator.AddShardAsync(args.ReplicaIndex, args.ShardId, args.NewSessionId, CancellationToken.None);
                 else
-                    await _conduitOrchestrator.UpdateShardAsync(args.ShardId, args.OldSessionId, args.NewSessionId, CancellationToken.None);
+                    await _conduitOrchestrator.UpdateShardAsync(args.ReplicaIndex, args.ShardId, args.OldSessionId, args.NewSessionId, CancellationToken.None);
             }
             catch (Exception ex)
             {

@@ -28,7 +28,7 @@ public class EventSubClientHostedServiceTests
     {
         var orchestratorMock = new Mock<IConduitOrchestrator>();
         orchestratorMock.Setup(o => o.InitializeAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        orchestratorMock.SetupGet(o => o.ConduitId).Returns("conduit-1");
+        orchestratorMock.SetupGet(o => o.ConduitIds).Returns(new List<string> { "conduit-1" });
 
         var shardManagerMock = new Mock<IShardManager>();
         shardManagerMock.SetupAdd(m => m.OnSessionIdUpdated += null);
@@ -46,7 +46,7 @@ public class EventSubClientHostedServiceTests
         var orchestratorMock = new Mock<IConduitOrchestrator>();
         orchestratorMock.Setup(o => o.InitializeAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         orchestratorMock.Setup(o => o.TeardownAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        orchestratorMock.SetupGet(o => o.ConduitId).Returns("conduit-1");
+        orchestratorMock.SetupGet(o => o.ConduitIds).Returns(new List<string> { "conduit-1" });
 
         var shardManagerMock = new Mock<IShardManager>();
         shardManagerMock.SetupAdd(m => m.OnSessionIdUpdated += null);
@@ -75,6 +75,6 @@ public class EventSubClientHostedServiceTests
             .Returns(new System.Net.Http.HttpClient());
         var twitchApi = new TwitchApi(httpClientFactoryMock.Object);
 
-        return new EventSubClient(options, logger, twitchApi, orchestrator, shardManager);
+        return new EventSubClient(options, logger, twitchApi, orchestrator, shardManager, new ReplayProtection(100), Mock.Of<IMessagePipeline>());
     }
 }

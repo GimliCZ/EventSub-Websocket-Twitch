@@ -3,6 +3,7 @@ using Twitch.EventSub.API;
 using Twitch.EventSub.API.Enums;
 using Twitch.EventSub.API.Models;
 using Twitch.EventSub.CoreFunctions;
+using Twitch.EventSub.Messages.SharedContents;
 
 namespace Twitch.EventSub.User
 {
@@ -19,6 +20,50 @@ namespace Twitch.EventSub.User
             _url = url;
             _twitchApi = twitchApi;
         }
+
+        /// <summary>
+        /// Returns the subset of conduit subscriptions owned by this user, identified by condition:
+        /// broadcaster_user_id, user_id, or moderator_user_id equal to the user id.
+        /// </summary>
+        public static List<WebSocketSubscription> OwnedSlice(IEnumerable<WebSocketSubscription> all, string userId)
+        {
+            return all.Where(s =>
+                s?.Condition != null &&
+                (s.Condition.BroadcasterUserId == userId ||
+                 s.Condition.UserId == userId ||
+                 s.Condition.ModeratorUserId == userId)).ToList();
+        }
+
+        /// <summary>
+        /// Conduit-scoped owned slice: this user's subscriptions that live on the given conduit only.
+        /// Under redundancy the same user+condition sub exists on multiple conduits; each replica must
+        /// reconcile ONLY its own conduit's copies, or replicas would delete each other's subscriptions.
+        /// </summary>
+        public static List<WebSocketSubscription> OwnedSlice(IEnumerable<WebSocketSubscription> all, string userId, string conduitId)
+        {
+            return OwnedSlice(all, userId)
+                .Where(s => s.Transport?.ConduitId == conduitId)
+                .ToList();
+        }
+
+        /// <summary>Exact per-user subscription accounting from the last reconciliation pass.</summary>
+        public sealed class ReconcileReport
+        {
+            public ReconcileReport(string userId, int ownedCount, int created, int removed)
+            {
+                UserId = userId;
+                OwnedCount = ownedCount;
+                Created = created;
+                Removed = removed;
+            }
+            public string UserId { get; }
+            public int OwnedCount { get; }
+            public int Created { get; }
+            public int Removed { get; }
+        }
+
+        /// <summary>The most recent reconciliation report for this user (null until first RunCheckAsync).</summary>
+        public ReconcileReport? LastReport { get; private set; }
 
         /// <summary>
         /// Event relaying access token refresh from API
@@ -72,9 +117,9 @@ namespace Twitch.EventSub.User
             }
             foreach (var getSubscriptionsResponse in allSubscriptions)
             {
-                foreach (var subscription in getSubscriptionsResponse.Data)
+                foreach (var subscription in OwnedSlice(getSubscriptionsResponse.Data, userId, conduitId))
                 {
-                    if (subscription.Transport.ConduitId != conduitId || subscription.Status != "enabled" ||
+                    if (subscription.Status != "enabled" ||
                         DateTime.UtcNow - ReplayProtection.ParseDateTimeString(subscription.CreatedAt) > TimeSpan.FromHours(1))
                     {
                         if (!await ApiTryUnSubscribeAsync(clientId, appAccessToken, subscription.Id, userId, logger, clSource))
@@ -95,9 +140,11 @@ namespace Twitch.EventSub.User
                 logger.LogInformation("[EventSubClient] - [SubscriptionManager] Subscription function returned null, skipping check");
                 return false;
             }
+            int created = 0;
+            int removed = 0;
             foreach (var getSubscriptionsResponse in allSubscriptions)
             {
-                var activeSubscriptions = getSubscriptionsResponse.Data;
+                var activeSubscriptions = OwnedSlice(getSubscriptionsResponse.Data, userId, conduitId);
 
                 // Find subscriptions that are extra (present in activeSubscriptions but not in _requestedSubscriptions)
                 var extraSubscriptions = activeSubscriptions
@@ -120,6 +167,7 @@ namespace Twitch.EventSub.User
                             logger.LogInformation("[EventSubClient] - [SubscriptionManager] Failed to unsubscribe active subscription during check" + extraSubscription.Type);
                             return false;
                         }
+                        removed++;
                         logger.LogInformation("[EventSubClient] - [SubscriptionManager] Removed extra sub: " + extraSubscription.Type);
                     }
                 }
@@ -134,10 +182,14 @@ namespace Twitch.EventSub.User
                             logger.LogInformation("[EventSubClient] - [SubscriptionManager] Failed to subscribe subscription during check");
                             return false;
                         }
+                        created++;
                         logger.LogInformation("[EventSubClient] - [SubscriptionManager] Added extra sub: " + missingSubscription.Type);
                     }
                 }
             }
+            var ownedCount = OwnedSlice(allSubscriptions.SelectMany(r => r.Data), userId, conduitId).Count;
+            LastReport = new ReconcileReport(userId, ownedCount, created, removed);
+            logger.LogInformation("[EventSubClient] - [SubscriptionManager] user {U}: owned={O} created={C} removed={R}", userId, ownedCount, created, removed);
             return true;
         }
 

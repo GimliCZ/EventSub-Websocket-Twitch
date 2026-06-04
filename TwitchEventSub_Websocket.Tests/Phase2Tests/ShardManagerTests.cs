@@ -14,8 +14,8 @@ public class ShardManagerTests
     [Fact]
     public async Task GetOrCreateShard_FirstUser_CreatesOneShard()
     {
-        var manager = new ShardManager(DefaultOptions(), NullLogger<ShardManager>.Instance);
-        var binding = await manager.GetOrCreateShardForUserAsync("user-1", CancellationToken.None);
+        var manager = new ShardManager(DefaultOptions(), NullLogger<ShardManager>.Instance, new MessagePipeline(NullLogger<MessagePipeline>.Instance));
+        var binding = await manager.GetOrCreateShardForUserAsync("user-1", replicaIndex: 0, CancellationToken.None);
         Assert.NotNull(binding);
         Assert.Equal(1, manager.ShardCount);
     }
@@ -23,10 +23,10 @@ public class ShardManagerTests
     [Fact]
     public async Task ReleaseUser_LastUserOnShard_ShardDisposed()
     {
-        var manager = new ShardManager(DefaultOptions(), NullLogger<ShardManager>.Instance);
-        await manager.GetOrCreateShardForUserAsync("user-1", CancellationToken.None);
+        var manager = new ShardManager(DefaultOptions(), NullLogger<ShardManager>.Instance, new MessagePipeline(NullLogger<MessagePipeline>.Instance));
+        await manager.GetOrCreateShardForUserAsync("user-1", replicaIndex: 0, CancellationToken.None);
         Assert.Equal(1, manager.ShardCount);
-        await manager.ReleaseUserFromShardAsync("user-1", CancellationToken.None);
+        await manager.ReleaseUserFromShardAsync("user-1", replicaIndex: 0, CancellationToken.None);
         Assert.Equal(0, manager.ShardCount);
     }
 
@@ -34,9 +34,9 @@ public class ShardManagerTests
     public async Task ConcurrentAddUsers_DoNotExceedMaxShards()
     {
         var opts = Options.Create(new EventSubClientOptions { ClientId = "test", AppAccessToken = "token", MaxShardsPerConduit = 2 });
-        var manager = new ShardManager(opts, NullLogger<ShardManager>.Instance);
+        var manager = new ShardManager(opts, NullLogger<ShardManager>.Instance, new MessagePipeline(NullLogger<MessagePipeline>.Instance));
         var tasks = Enumerable.Range(0, 10)
-            .Select(i => Task.Run(() => manager.GetOrCreateShardForUserAsync($"user-{i}", CancellationToken.None)))
+            .Select(i => Task.Run(() => manager.GetOrCreateShardForUserAsync($"user-{i}", replicaIndex: 0, CancellationToken.None)))
             .ToArray();
         await Task.WhenAll(tasks);
         Assert.True(manager.ShardCount <= 2);
@@ -45,11 +45,11 @@ public class ShardManagerTests
     [Fact]
     public async Task SessionIdUpdated_FiredWhenSimulatedActive()
     {
-        var manager = new ShardManager(DefaultOptions(), NullLogger<ShardManager>.Instance);
+        var manager = new ShardManager(DefaultOptions(), NullLogger<ShardManager>.Instance, new MessagePipeline(NullLogger<MessagePipeline>.Instance));
         SessionIdUpdatedArgs? received = null;
         manager.OnSessionIdUpdated += (_, args) => received = args;
-        await manager.GetOrCreateShardForUserAsync("user-1", CancellationToken.None);
-        manager.SimulateSessionIdUpdatedForTest("user-1", "session-xyz");
+        await manager.GetOrCreateShardForUserAsync("user-1", replicaIndex: 0, CancellationToken.None);
+        manager.SimulateSessionIdUpdatedForTest("user-1", 0, "session-xyz");
         Assert.NotNull(received);
         Assert.Equal("session-xyz", received!.NewSessionId);
     }

@@ -1,3 +1,7 @@
+using Microsoft.Extensions.Logging;
+using Twitch.EventSub.API.Enums;
+using Twitch.EventSub.APIConduit.Models.Shared;
+
 namespace Twitch.EventSub.APIConduit;
 
 /// <summary>
@@ -26,4 +30,10 @@ public interface ITwitchConduitApi
 
     /// <summary>Deletes the conduit. Twitch auto-removes all associated subscriptions.</summary>
     Task DeleteConduitAsync(string conduitId, string appAccessToken, string clientId, CancellationToken ct);
+
+    /// <summary>
+    /// Retrieves all shards for a conduit, paginating through all results.
+    /// Signature matches the concrete TwitchApiConduit implementation exactly (CTS + ILogger).
+    /// </summary>
+    Task<List<ConduitShard>> GetAllConduitGetShardsAsync(string clientId, string accessToken, string conduitId, CancellationTokenSource clSource, ILogger logger, SubscriptionStatusTypes statusSelector = SubscriptionStatusTypes.Enabled);
 }

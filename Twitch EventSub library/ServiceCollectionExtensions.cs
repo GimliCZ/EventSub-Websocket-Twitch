@@ -21,6 +21,7 @@ namespace Twitch.EventSub
             services.AddOptions<EventSubClientOptions>()
                 .Configure(configure)
                 .ValidateDataAnnotations()
+                .Validate(o => o.RedundancyFactor <= o.MaxConduits, "RedundancyFactor must be <= MaxConduits")
                 .ValidateOnStart();
 
             services.AddTwitchEventSubHttpClients();
@@ -41,7 +42,10 @@ namespace Twitch.EventSub
             Action<IServiceProvider, EventSubClientOptions> configure)
         {
             services.AddOptions<EventSubClientOptions>()
-                    .Configure<IServiceProvider>((options, sp) => configure(sp, options));
+                    .Configure<IServiceProvider>((options, sp) => configure(sp, options))
+                    .ValidateDataAnnotations()
+                    .Validate(o => o.RedundancyFactor <= o.MaxConduits, "RedundancyFactor must be <= MaxConduits")
+                    .ValidateOnStart();
             services.AddTwitchEventSubHttpClients();
             services.AddTwitchEventSubClient();
             return services;
@@ -104,9 +108,9 @@ namespace Twitch.EventSub
             }
 
             services.AddSingleton<ReplayProtection>(sp =>
-                new ReplayProtection(100));  // singleton shared across all shards
+                new ReplayProtection(sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<EventSubClientOptions>>().Value.DedupWindowSize));  // singleton shared across all shards
 
-            services.AddSingleton<IEventRouter, EventRouter>();
+            services.AddSingleton<IMessagePipeline, MessagePipeline>();
             services.AddSingleton<IShardManager, ShardManager>();
             services.AddSingleton<ITwitchConduitApi, TwitchApiConduit>();
             services.AddSingleton<IConduitOrchestrator, ConduitOrchestrator>();
